@@ -1,0 +1,99 @@
+body {
+    background-color: #f0f4f8;
+    font-family: 'Inter', sans-serif;
+}
+
+.course-card {
+    background-color: #ffffff;
+    border-radius: 1rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.course-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.course-image-container {
+    height: 9rem;
+    position: relative;
+}
+
+.course-image {
+    height: 100%;
+    width: 100%;
+    object-fit: contain;
+    transition: transform 0.4s ease;
+}
+
+.course-card:hover .course-image {
+    transform: scale(1.1);
+}
+
+.btn-start {
+    background-color: #0066cc;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-start:hover {
+    transform: scale(1.05);
+    background-color: #0052a3;
+}
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    padding-top: 7rem; /* Adjust this value to match your header's height */
+}
+
+.main-content {
+    margin-left: 16rem; /* Adjust this value to match your sidebar's width */
+}
+
+/* --- Mobile List View --- */
+@media (max-width: 639px) {
+    .course-card {
+        flex-direction: row;
+        height: auto; /* Override height for list view */
+    }
+
+    .course-image-container {
+        width: 25%;
+        height: auto;
+        flex-shrink: 0;
+    }
+
+    .course-image {
+        object-fit: cover; /* Cover is better for the list aspect ratio */
+    }
+
+    .course-card .min-h-\[3rem\] {
+        min-height: auto; /* Let title height be natural on mobile */
+    }
+
+    .course-card > .flex-col {
+        padding: 0.5rem 1rem;
+    }
+
+    .sidebar {
+        display: none; /* Hide sidebar on mobile */
+    }
+
+    .main-content {
+        margin-left: 0; /* Remove content margin on mobile */
+    }
+}

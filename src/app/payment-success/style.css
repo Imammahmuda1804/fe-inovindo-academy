@@ -1,0 +1,27 @@
+.gradient-main {
+  background: linear-gradient(135deg, #3b82f6 0%, #10b981 100%);
+}
+.gradient-bg {
+  background: linear-gradient(to bottom right, #eff6ff, #ffffff, #f0fdf4);
+}
+.shadow-card {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+}
+.shadow-button {
+  box-shadow: 0 4px 15px -3px rgba(59, 130, 246, 0.4);
+}
+
+/* Sembunyikan elemen yang tidak perlu saat print */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body, .printable-area {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  .shadow-card {
+    box-shadow: none;
+    border: 1px solid #e5e7eb;
+  }
+}

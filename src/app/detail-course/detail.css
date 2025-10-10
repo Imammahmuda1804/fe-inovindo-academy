@@ -1,0 +1,358 @@
+html {
+    scroll-behavior: smooth;
+}
+
+/* Reset & Basic Styling */
+body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background-color: #f8fafc; /* Latar belakang lebih lembut */
+    color: #334155; /* Warna teks utama yang tidak terlalu pekat */
+}
+
+.container {
+    width: 90%;
+    max-width: 1280px; /* Sedikit lebih lebar untuk tampilan modern */
+    margin: 0 auto;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #e2e8f0;
+}
+::-webkit-scrollbar-thumb {
+    background-color: #60a5fa;
+    border-radius: 10px;
+    border: 2px solid #e2e8f0;
+}
+::-webkit-scrollbar-thumb:hover {
+    background-color: #3b82f6;
+}
+
+
+/* Course Page Specifics */
+.course-page {
+    padding: 2.5rem 0; /* Padding lebih besar */
+}
+
+.course-header-section {
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 2.5rem;
+    padding: 2rem;
+    border-radius: 12px;
+    background-color: #f1f5f9;
+}
+
+.breadcrumbs {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin-bottom: 0.75rem;
+    font-weight: 500;
+}
+
+.course-header-section h1 {
+    font-size: 2.5rem; /* Ukuran font lebih besar */
+    font-weight: 800;
+    margin-bottom: 0.75rem;
+    color: #1e293b;
+}
+
+.instructor p {
+    font-weight: 600;
+    color: #475569;
+}
+
+.main-content-section {
+    display: flex;
+    flex-direction: row; /* Pastikan berdampingan di layar besar */
+    gap: 2.5rem;
+}
+
+.course-main-content {
+    flex: 3;
+    min-width: 0;
+}
+
+.sidebar {
+    flex: 1;
+    position: sticky;
+    top: 120px; /* Agar tetap terlihat saat scroll */
+    align-self: flex-start;
+}
+
+/* Video & Tabs */
+.video-container {
+    position: relative;
+    padding-bottom: 56.25%; /* 16:9 aspect ratio */
+    height: 0;
+    overflow: hidden;
+    margin-bottom: 2rem;
+    border-radius: 12px; /* Sudut membulat */
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.video-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.course-tabs {
+    display: flex;
+    gap: 2rem;
+    border-bottom: 1px solid #e5e7eb;
+    margin-bottom: 2rem;
+}
+
+.course-tabs a {
+    padding: 1rem 0.25rem;
+    text-decoration: none;
+    color: #64748b;
+    font-weight: 600;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.course-tabs a:hover {
+    color: #0f172a;
+}
+
+.course-tabs a.active {
+    color: #2563eb;
+    border-bottom-color: #2563eb;
+}
+
+/* Sections */
+section {
+    margin-bottom: 3rem;
+}
+
+section h2 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    color: #1e293b;
+}
+
+/* Benefits Section */
+.benefits-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.benefit-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: #ffffff;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.benefit-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+}
+
+.benefit-item .fa-check-circle {
+    font-size: 1.25rem;
+}
+
+/* Syllabus Section */
+.syllabus .syllabus-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    color: #334155;
+    padding: 1rem 1.25rem;
+    text-align: left;
+    background-color: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    transition: background-color 0.3s ease;
+}
+.syllabus .syllabus-header:hover {
+    background-color: #f1f5f9;
+}
+
+.syllabus .syllabus-content {
+    padding-left: 1.25rem;
+    margin-top: 0.5rem;
+    border-left: 2px solid #e2e8f0;
+    margin-left: 1.25rem;
+}
+
+.syllabus .syllabus-content a {
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+.syllabus .syllabus-content a:hover {
+    background-color: #eef2ff;
+    transform: translateX(4px);
+}
+.syllabus .syllabus-content a:hover i {
+    transform: scale(1.1);
+    color: #2563eb;
+}
+
+.syllabus-content i {
+     transition: transform 0.2s ease, color 0.2s ease;
+}
+
+/* Mentor Profile */
+.mentor-card {
+    background: #fff;
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+.mentor-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.07);
+}
+
+.mentor-info {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+.mentor-avatar img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #fff;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+}
+.mentor-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-top: 0.75rem;
+}
+.mentor-specialties ul {
+    list-style: none;
+    padding: 0;
+    margin-top: 1rem;
+}
+.mentor-specialties li {
+    margin-bottom: 0.5rem;
+}
+
+/* Sidebar Card with Glassmorphism */
+.course-card {
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(10px);
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    border: 1px solid rgba(229, 231, 235, 0.5);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.price {
+    font-size: 1.75rem;
+    font-weight: 700;
+}
+.price span {
+    text-decoration: line-through;
+    color: #718096;
+    font-size: 1rem;
+    margin-left: 0.5rem;
+}
+.discount {
+    background: #fefcbf;
+    color: #b7791f;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+.btn-buy {
+    width: 100%;
+    padding: 0.875rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    background-color: #2563eb;
+    color: #fff;
+}
+
+.btn-buy:hover {
+    background-color: #1d4ed8;
+    transform: translateY(-2px);
+}
+
+.course-info-list {
+    list-style: none;
+    padding: 0;
+    margin-top: 1.5rem;
+}
+.course-info-list li {
+    margin-bottom: 0.75rem;
+    color: #4a5568;
+}
+.course-info-list .fas {
+    margin-right: 0.75rem;
+    width: 20px;
+    text-align: center;
+    color: #64748b;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .main-content-section {
+        flex-direction: column;
+    }
+    .sidebar {
+        position: static; /* Kembali normal di mobile */
+    }
+    .course-card {
+        background: #ffffff;
+        backdrop-filter: none;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        border: 1px solid #e5e7eb;
+        padding-left: 2rem;
+        align-items: center;
+        text-align: left;
+    }
+    .course-card .btn-buy {
+        max-width: 400px;
+    }
+    .course-card .course-info-list {
+        display: inline-block;
+        text-align: left;
+        margin-top: 1.5rem;
+    }
+}
+@media (max-width: 768px) {
+    .benefits-grid {
+        grid-template-columns: 1fr;
+    }
+    .course-header-section h1 {
+        font-size: 1.875rem; /* 30px */
+    }
+    .course-page {
+        padding: 1.5rem 0;
+    }
+    .mentor-info {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem; /* Adjust gap for mobile */
+    }
+}
