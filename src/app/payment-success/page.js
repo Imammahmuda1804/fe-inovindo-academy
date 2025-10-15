@@ -1,36 +1,14 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import {
-  FaCheck,
-  FaHome,
-  FaGraduationCap,
-  FaHashtag,
-  FaCalendarAlt,
-  FaCreditCard,
-  FaPrint,
-  FaShoppingBag,
-  FaChevronDown,
-} from "react-icons/fa";
-import Link from "next/link";
-import "./style.css";
-
-// Komponen untuk menyembunyikan header/footer
-const HideLayoutElements = () => {
-  useEffect(() => {
-    const header = document.querySelector("body > div > header");
-    const footer = document.querySelector("body > div footer");
-    if (header) header.style.display = "none";
-    if (footer) footer.style.display = "none";
-    return () => {
-      if (header) header.style.display = "block";
-      if (footer) footer.style.display = "block";
-    };
-  }, []);
-  return null;
-};
+import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
+import { 
+    FaCheck, FaHome, FaGraduationCap, FaHashtag, FaCalendarAlt, 
+    FaCreditCard, FaPrint, FaChevronDown 
+} from 'react-icons/fa';
+import Link from 'next/link';
+import './style.css';
 
 // Fungsi utilitas
 const formatRupiah = (amount) =>
@@ -75,6 +53,57 @@ export default function PaymentSuccessPage() {
     }
   }, []);
 
+  const handlePrint = async () => {
+    // TODO: Implementasikan pembuatan PDF melalui backend di sini.
+    // Komentar di bawah ini adalah contoh kerangka untuk implementasi di masa depan.
+
+    /*
+    console.log("Memulai proses pembuatan PDF untuk transaksi:", transaction.transaction_id);
+    try {
+      // 1. Panggil API backend Anda untuk menghasilkan PDF.
+      // Ganti URL dengan endpoint API Anda yang sebenarnya.
+      const response = await fetch(`https://your-laravel-api.com/api/transactions/generate-pdf`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // 'Authorization': 'Bearer YOUR_AUTH_TOKEN', // Tambahkan jika perlu otentikasi
+        },
+        body: JSON.stringify({
+          transaction_id: transaction.transaction_id,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Gagal saat menghubungi server untuk membuat PDF.');
+      }
+
+      // 2. Terima file PDF dari backend dan buka di tab baru atau unduh.
+      const blob = await response.blob();
+      const fileURL = URL.createObjectURL(blob);
+      
+      // Buka di tab baru
+      window.open(fileURL, '_blank');
+
+      // Atau, untuk mengunduh file secara otomatis:
+      // const link = document.createElement('a');
+      // link.href = fileURL;
+      // link.setAttribute('download', `bukti-transaksi-${transaction.transaction_id}.pdf`);
+      // document.body.appendChild(link);
+      // link.click();
+      // document.body.removeChild(link);
+
+    } catch (error) {
+      console.error("Gagal membuat PDF:", error);
+      alert("Gagal membuat bukti transaksi. Silakan coba lagi nanti.");
+    }
+    */
+
+    // Untuk saat ini, fungsionalitas cetak halaman tetap dipertahankan sebagai placeholder.
+    console.log("Fungsionalitas cetak saat ini masih menggunakan window.print(). Ganti logika di atas saat backend siap.");
+    window.print();
+  };
+
+
   if (!transaction) {
     return (
       <div className="flex items-center justify-center h-screen gradient-bg">
@@ -85,8 +114,7 @@ export default function PaymentSuccessPage() {
 
   return (
     <>
-      <HideLayoutElements />
-      <div className="flex items-start justify-center min-h-screen p-4 pt-20 mt-10 mb-5 font-sans text-gray-800 gradient-bg printable-areav">
+      <div className="flex items-center justify-center min-h-screen p-4 font-sans text-gray-800 gradient-bg printable-areav">
         <motion.main
           className="w-full max-w-2xl mx-auto"
           initial={{ opacity: 0, y: 20 }}
@@ -199,7 +227,7 @@ export default function PaymentSuccessPage() {
               <FaGraduationCap /> Mulai Belajar
             </Link>
             <button
-              onClick={() => window.print()}
+              onClick={handlePrint}
               className="w-full sm:w-auto text-center bg-white border border-gray-300 text-gray-700 px-5 py-2.5 rounded-lg font-semibold text-base hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
             >
               <FaPrint /> Cetak

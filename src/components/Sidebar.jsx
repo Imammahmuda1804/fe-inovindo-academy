@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { FaReceipt, FaCertificate, FaCog, FaBook } from 'react-icons/fa';
 
@@ -38,9 +39,23 @@ const Sidebar = () => {
       initial={{ x: -200, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className="w-64 p-4 pr-8"
+      className="w-64 bg-white/50 backdrop-blur-lg rounded-2xl shadow-lg border border-white/30 overflow-hidden"
     >
-      <nav className="flex flex-col space-y-2">
+      {/* Profile Section */}
+      <div className="text-center p-6 border-b border-white/20">
+        <Image
+          src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=1780&auto=format&fit=crop"
+          alt="User Profile"
+          width={80}
+          height={80}
+          className="rounded-full mx-auto mb-3 border-4 border-white/50 shadow-md"
+        />
+        <h3 className="font-bold text-lg text-slate-800">Ruben Amorim</h3>
+        <p className="text-sm text-gray-600">ruben.amorim@example.com</p>
+      </div>
+
+      {/* Navigation */}
+      <nav className="p-4 space-y-2">
         {menuItems.map((item) => {
           const isActive = pathname === item.href;
           return (
@@ -63,6 +78,5 @@ const Sidebar = () => {
     </motion.aside>
   );
 };
-
 
 export default Sidebar;
