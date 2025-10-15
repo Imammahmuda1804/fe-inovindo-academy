@@ -1,11 +1,18 @@
-'use client';
+"use client";
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import AnimatedContent from "@/components/animatedcontent.jsx";
-import { FaSearch, FaCode, FaPalette, FaBullhorn, FaChartBar, FaList } from "react-icons/fa";
+import {
+  FaSearch,
+  FaCode,
+  FaPalette,
+  FaBullhorn,
+  FaChartBar,
+  FaList,
+} from "react-icons/fa";
 import Sidebar from "@/components/Sidebar.jsx";
 import MyCoursesSkeleton from "@/components/MyCoursesSkeleton.jsx"; // Import skeleton
 
@@ -94,41 +101,51 @@ const CourseCard = ({ course }) => {
           boxShadow: "0px 15px 25px rgba(0, 0, 0, 0.1)",
         }}
       >
-        <div className="relative overflow-hidden h-40">
+        <div className="relative overflow-hidden w-full aspect-[16/9]">
           <Image
             src={course.imgSrc}
             alt={course.title}
             fill
-            className="object-contain transition-transform duration-500 group-hover:scale-110"
+            className="object-cover transition-transform duration-500 group-hover:scale-110"
           />
         </div>
-        <div className="p-5 flex flex-col flex-grow">
-          <h2 className="text-lg font-bold text-gray-800 flex-grow min-h-[3.5rem]">{course.title}</h2>
-          
-          <div className="flex items-center my-4">
-              <div className="w-8 h-8 rounded-full overflow-hidden mr-3 flex-shrink-0">
-                  <Image
-                      src={course.instructor.imgSrc}
-                      alt={course.instructor.name}
-                      width={32}
-                      height={32}
-                      className="object-cover w-full h-full"
-                  />
-              </div>
-              <span className="text-gray-600 text-sm font-medium">
-                  {course.instructor.name}
-              </span>
+        <div className="p-4 flex flex-col flex-grow">
+          <h2 className="text-lg font-bold text-gray-800">
+            {course.title}
+          </h2>
+
+          <div className="flex items-center mt-3">
+            <div className="w-8 h-8 rounded-full overflow-hidden mr-3 flex-shrink-0">
+              <Image
+                src={course.instructor.imgSrc}
+                alt={course.instructor.name}
+                width={32}
+                height={32}
+                className="object-cover w-full h-full"
+              />
+            </div>
+            <span className="text-gray-600 text-sm font-medium">
+              {course.instructor.name}
+            </span>
           </div>
 
           <div className="w-full mt-auto">
             <div className="mb-3">
               <div className="flex justify-between items-center mb-1">
                 <p className="text-xs font-semibold text-gray-500">Progres</p>
-                <p className={`text-xs font-bold ${getProgressColor(course.progress).replace('bg-', 'text-')}`}>{course.progress}%</p>
+                <p
+                  className={`text-xs font-bold ${
+                    getProgressColor(course.progress).replace("bg-", "text-")
+                  }`}
+                >
+                  {course.progress}%
+                </p>
               </div>
               <div className="w-full h-2 rounded-full bg-gray-200 overflow-hidden">
                 <motion.div
-                  className={`h-2 rounded-full ${getProgressColor(course.progress)}`}
+                  className={`h-2 rounded-full ${getProgressColor(
+                    course.progress
+                  )}`}
                   initial={{ width: 0 }}
                   whileInView={{ width: `${course.progress}%` }}
                   viewport={{ once: true }}
@@ -143,7 +160,12 @@ const CourseCard = ({ course }) => {
   );
 };
 
-const Pagination = ({ coursesPerPage, totalCourses, paginate, currentPage }) => {
+const Pagination = ({
+  coursesPerPage,
+  totalCourses,
+  paginate,
+  currentPage,
+}) => {
   const pageNumbers = [];
   for (let i = 1; i <= Math.ceil(totalCourses / coursesPerPage); i++) {
     pageNumbers.push(i);
@@ -152,15 +174,15 @@ const Pagination = ({ coursesPerPage, totalCourses, paginate, currentPage }) => 
 
   return (
     <nav>
-      <ul className='flex justify-center items-center space-x-2'>
-        {pageNumbers.map(number => (
+      <ul className="flex justify-center items-center space-x-2">
+        {pageNumbers.map((number) => (
           <li key={number}>
             <button
               onClick={() => paginate(number)}
-              className={`w-10 h-10 border rounded-lg transition-colors duration-300 font-semibold ${ 
-                currentPage === number 
-                ? 'bg-blue-600 text-white border-blue-600 shadow-md'
-                : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-100'
+              className={`w-10 h-10 border rounded-lg transition-colors duration-300 font-semibold ${
+                currentPage === number
+                  ? "bg-blue-600 text-white border-blue-600 shadow-md"
+                  : "bg-white text-gray-600 border-gray-300 hover:bg-gray-100"
               }`}
             >
               {number}
@@ -185,10 +207,10 @@ export default function MyCoursesPage() {
       // Simulate fetching categories
       try {
         const categoryIcons = {
-          'Pengembangan': FaCode,
-          'Desain': FaPalette,
-          'Pemasaran': FaBullhorn,
-          'Data': FaChartBar,
+          Pengembangan: FaCode,
+          Desain: FaPalette,
+          Pemasaran: FaBullhorn,
+          Data: FaChartBar,
         };
         // In a real app, you would fetch from an API
         // const response = await fetch('http://your-api.com/api/categories');
@@ -215,6 +237,10 @@ export default function MyCoursesPage() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   const filteredCourses = courses.filter(
     (course) =>
       course.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
@@ -223,10 +249,16 @@ export default function MyCoursesPage() {
 
   const indexOfLastCourse = currentPage * coursesPerPage;
   const indexOfFirstCourse = indexOfLastCourse - coursesPerPage;
-  const currentCourses = filteredCourses.slice(indexOfFirstCourse, indexOfLastCourse);
+  const currentCourses = filteredCourses.slice(
+    indexOfFirstCourse,
+    indexOfLastCourse
+  );
 
   const paginate = (pageNumber) => {
-    if (pageNumber > 0 && pageNumber <= Math.ceil(filteredCourses.length / coursesPerPage)) {
+    if (
+      pageNumber > 0 &&
+      pageNumber <= Math.ceil(filteredCourses.length / coursesPerPage)
+    ) {
       setCurrentPage(pageNumber);
     }
   };
@@ -253,7 +285,10 @@ export default function MyCoursesPage() {
                 <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 drop-shadow-lg">
                   Kursus Saya
                 </h1>
-                <p className="mt-3 text-lg text-gray-600 max-w-2xl mx-auto">Kelola dan lanjutkan progres belajar Anda pada kursus-kursus yang telah Anda ambil.</p>
+                <p className="mt-3 text-lg text-gray-600 max-w-2xl mx-auto">
+                  Kelola dan lanjutkan progres belajar Anda pada kursus-kursus
+                  yang telah Anda ambil.
+                </p>
               </div>
             </AnimatedContent>
 
@@ -265,26 +300,32 @@ export default function MyCoursesPage() {
                       type="text"
                       placeholder="Cari kelas..."
                       className="w-full pl-10 pr-4 py-2.5 text-base border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
-                      onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                      onChange={(e) => {
+                        setSearchTerm(e.target.value);
+                        setCurrentPage(1);
+                      }}
                     />
                     <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
                       <FaSearch className="text-gray-400" />
                     </div>
                   </div>
                   <div className="flex space-x-2 overflow-x-auto pb-2 -mb-2 no-scrollbar">
-                    {categories.map(cat => (
-                        <button
-                            key={cat.value}
-                            onClick={() => { setFilterCategory(cat.value); setCurrentPage(1); }}
-                            className={`px-4 py-2.5 text-sm font-semibold rounded-full flex-shrink-0 transition-colors duration-300 flex items-center ${ 
-                                filterCategory === cat.value
-                                    ? 'bg-blue-600 text-white shadow-md'
-                                    : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-100'
-                            }`}
-                        >
-                            {cat.icon && <cat.icon className="mr-2" />}
-                            {cat.label}
-                        </button>
+                    {categories.map((cat) => (
+                      <button
+                        key={cat.value}
+                        onClick={() => {
+                          setFilterCategory(cat.value);
+                          setCurrentPage(1);
+                        }}
+                        className={`px-4 py-2.5 text-sm font-semibold rounded-full flex-shrink-0 transition-colors duration-300 flex items-center ${
+                          filterCategory === cat.value
+                            ? "bg-blue-600 text-white shadow-md"
+                            : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-100"
+                        }`}
+                      >
+                        {cat.icon && <cat.icon className="mr-2" />}
+                        {cat.label}
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -295,28 +336,34 @@ export default function MyCoursesPage() {
               {currentCourses.length > 0 ? (
                 <div
                   id="courses-container"
-                  className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3"
+                  className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
                 >
                   {currentCourses.map((course, index) => (
-                    <AnimatedContent key={index} distance={30} delay={index * 0.1}>
+                    <AnimatedContent
+                      key={index}
+                      distance={30}
+                      delay={index * 0.1}
+                    >
                       <CourseCard course={course} />
                     </AnimatedContent>
                   ))}
                 </div>
               ) : (
                 <div className="text-center py-16">
-                  <p className="text-gray-500 text-lg">Tidak ada kursus yang cocok dengan pencarian Anda.</p>
+                  <p className="text-gray-500 text-lg">
+                    Tidak ada kursus yang cocok dengan pencarian Anda.
+                  </p>
                 </div>
               )}
             </AnimatedContent>
 
             <div className="flex justify-center mt-16 mb-8">
-                <Pagination 
-                    coursesPerPage={coursesPerPage}
-                    totalCourses={filteredCourses.length}
-                    paginate={paginate}
-                    currentPage={currentPage}
-                />
+              <Pagination
+                coursesPerPage={coursesPerPage}
+                totalCourses={filteredCourses.length}
+                paginate={paginate}
+                currentPage={currentPage}
+              />
             </div>
           </div>
         </div>
