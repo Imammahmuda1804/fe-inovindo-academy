@@ -97,7 +97,7 @@ export default function SettingsPage() {
     <>
       <Toast toast={toast} setToast={setToast} />
       <div className="relative min-h-screen font-sans bg-gray-50 pt-24 px-2 sm:px-6 md:px-8 lg:px-16">
-        <main className="container mx-auto py-8 relative z-10">
+        <main className="container mx-auto py-8 pb-24 md:pb-8 relative">
           <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
             <aside className="w-full lg:w-72">
               <div className="sticky top-48">
@@ -123,7 +123,7 @@ export default function SettingsPage() {
               <div key={activeTab}>
                   {activeTab === 'Profil' && (
                     <AnimatedContent>
-                      <div className="space-y-8">
+                      <div className="space-y-8 isolate">
                         <SettingsCard title="Foto Profil" icon={<FaCamera />}>
                           <div className="flex flex-col sm:flex-row items-center gap-6">
                             <div className="relative w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden shadow-inner flex-shrink-0">

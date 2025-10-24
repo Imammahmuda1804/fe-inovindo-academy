@@ -422,13 +422,13 @@ const DetailCoursePage = () => {
                     <h2 className="text-3xl font-bold text-gray-800 mb-6">
                       Tentang Instruktur
                     </h2>
-                    <div className="p-6 bg-white rounded-2xl shadow-lg flex flex-col sm:flex-row items-center gap-8">
+                    <div className="p-6 bg-white rounded-2xl shadow-lg flex flex-col sm:flex-row items-center gap-4 sm:gap-8">
                       <Image
                         src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/Justinus_Lhaksana.jpg/250px-Justinus_Lhaksana.jpg"
                         alt="Mentor Profile Picture"
                         width={100}
                         height={100}
-                        className="rounded-full shadow-lg object-cover border-4 border-white -mt-16"
+                        className="rounded-full shadow-lg object-cover border-4 border-white sm:-mt-16"
                       />
                       <div className="flex-1 text-center sm:text-left">
                         <h3 className="text-2xl font-bold text-gray-900">
@@ -438,7 +438,7 @@ const DetailCoursePage = () => {
                           Insinyur Mobile berpengalaman dengan lebih dari 10
                           tahun dalam pengembangan aplikasi.
                         </p>
-                        <div className="flex justify-center sm:justify-start items-center gap-6 text-gray-600">
+                        <div className="flex flex-col sm:flex-row justify-center sm:justify-start items-center gap-4 sm:gap-6 text-gray-600">
                           <span className="flex items-center gap-2 font-medium">
                             <FaPlayCircle className="text-blue-500" /> 10 Kursus
                           </span>

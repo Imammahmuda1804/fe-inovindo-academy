@@ -269,7 +269,7 @@ export default function MyCoursesPage() {
 
   return (
     <div className="relative min-h-screen font-sans bg-gray-50 pt-24 px-2 sm:px-6 md:px-8 lg:px-16">
-      <main className="container mx-auto py-8 relative z-10">
+      <main className="container mx-auto py-8 pb-24 md:pb-8 relative">
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
           {/* Sidebar Column */}
           <aside className="w-full lg:w-72">
@@ -336,7 +336,7 @@ export default function MyCoursesPage() {
               {currentCourses.length > 0 ? (
                 <div
                   id="courses-container"
-                  className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+                  className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 isolate"
                 >
                   {currentCourses.map((course, index) => (
                     <AnimatedContent

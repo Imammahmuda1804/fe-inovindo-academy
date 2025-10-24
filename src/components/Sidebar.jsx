@@ -36,13 +36,13 @@ const Sidebar = () => {
 
   return (
     <motion.aside
-      initial={{ x: -200, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      transition={{ duration: 0.5 }}
-      className="w-64 bg-white/50 backdrop-blur-lg rounded-2xl shadow-lg border border-white/30 overflow-hidden"
+      initial={{ y: 100, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.5, ease: 'easeOut' }}
+      className="fixed bottom-4 left-4 right-4 z-[9999] rounded-2xl border border-white/30 bg-white/10 backdrop-blur-lg shadow-lg overflow-hidden md:relative md:bottom-auto md:left-auto md:right-auto md:w-64 md:shrink-0 md:bg-white/50"
     >
       {/* Profile Section */}
-      <div className="text-center p-6 border-b border-white/20">
+      <div className="hidden md:block text-center p-6 border-b border-white/20">
         <Image
           src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=1780&auto=format&fit=crop"
           alt="User Profile"
@@ -55,25 +55,28 @@ const Sidebar = () => {
       </div>
 
       {/* Navigation */}
-      <nav className="p-4 space-y-2">
-        {menuItems.map((item) => {
-          const isActive = pathname === item.href;
-          return (
-            <MotionLink
-              key={item.title}
-              href={item.href}
-              className={`flex items-center px-4 py-3 text-lg font-medium rounded-lg transition-colors ${
-                isActive
-                  ? 'bg-blue-100 text-blue-600'
-                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-              }`}
-              whileHover={{ scale: 1.05 }}
-            >
-              <item.icon className="w-5 h-5 mr-3" />
-              {item.title}
-            </MotionLink>
-          );
-        })}
+      <nav className="p-2 md:p-4">
+        <div className="flex flex-row justify-around md:flex-col md:space-y-2">
+            {menuItems.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+                <MotionLink
+                key={item.title}
+                href={item.href}
+                title={item.title}
+                className={`flex flex-col md:flex-row items-center p-2 md:px-4 md:py-3 text-sm md:text-base font-medium rounded-lg transition-colors ${
+                    isActive
+                    ? 'bg-blue-100 text-blue-600'
+                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                }`}
+                whileHover={{ scale: 1.05 }}
+                >
+                <item.icon className="w-5 h-5 md:mr-3" />
+                <span className="mt-1 md:mt-0">{item.title}</span>
+                </MotionLink>
+            );
+            })}
+        </div>
       </nav>
     </motion.aside>
   );

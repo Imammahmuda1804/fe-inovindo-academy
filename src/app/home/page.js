@@ -65,59 +65,6 @@ const categories = [
   },
 ];
 
-const popularCourses = [
-  {
-    image:
-      "https://media.geeksforgeeks.org/wp-content/uploads/20240625170311/Figma-tutorial.webp",
-    alt: "Design Course",
-    title: "Beginners Guide to Design",
-    author: "By Ronald Richards",
-    enrollment: "1,200 enrollment",
-    price: "$149.9",
-    link: "/detail-course",
-  },
-  {
-    image:
-      "https://images.unsplash.com/photo-1542831371-29b0f74f9713?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=400&q=80",
-    alt: "Development Course",
-    title: "Web Development Bootcamp",
-    author: "By Jane Cooper",
-    enrollment: "3,500 enrollment",
-    price: "$199.9",
-    link: "/detail-course",
-  },
-  {
-    image:
-      "https://images.unsplash.com/photo-1557862921-37829c790f19?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=400&q=80",
-    alt: "Marketing Course",
-    title: "Digital Marketing Masterclass",
-    author: "By Robert Fox",
-    enrollment: "2,800 enrollment",
-    price: "$129.9",
-    link: "/detail-course",
-  },
-  {
-    image:
-      "https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=400&q=80",
-    alt: "Data Science Course",
-    title: "Data Science with Python",
-    author: "By Jenny Wilson",
-    enrollment: "4,100 enrollment",
-    price: "$249.9",
-    link: "/detail-course",
-  },
-  {
-    image:
-      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS6d76FWQGLWnlL1CcwWHHojunUMKetaMy8sQ&s",
-    alt: "Astrology Course",
-    title: "Introduction to Astrology",
-    author: "By Esther Howard",
-    enrollment: "800 enrollment",
-    price: "$99.9",
-    link: "/detail-course",
-  },
-];
-
 function CourseCard({ course, index }) {
   return (
     <motion.div
@@ -127,13 +74,16 @@ function CourseCard({ course, index }) {
         boxShadow: "0px 15px 25px rgba(0, 0, 0, 0.1)",
       }}
     >
-      <div className="overflow-hidden rounded-t-2xl">
+      <div className="relative overflow-hidden w-full aspect-[16/9] rounded-t-2xl">
         <Image
           src={course.image}
           alt={course.alt}
-          width={350}
-          height={200}
-          className="object-cover w-full h-40 transition-transform duration-500 ease-in-out group-hover:scale-110"
+          fill
+          className="object-cover transition-transform duration-500 ease-in-out group-hover:scale-110"
+          // If image is an external URL, avoid Next.js image optimization to prevent server-side proxy fetch errors
+          unoptimized={
+            typeof course.image === "string" && course.image.startsWith("http")
+          }
         />
       </div>
       <div className="flex flex-col flex-grow p-5">
@@ -259,6 +209,10 @@ function MentorCard({ mentor, index }) {
           width={96}
           height={96}
           className="object-cover w-24 h-24 mx-auto rounded-full shadow-lg"
+          // mark remote mentor images unoptimized to avoid server-side fetch issues during dev
+          unoptimized={
+            typeof mentor.image === "string" && mentor.image.startsWith("http")
+          }
         />
         <h3 className="mt-4 text-lg font-bold text-gray-800">{mentor.name}</h3>
         <p className="text-sm text-gray-600">{mentor.title}</p>
@@ -274,9 +228,12 @@ export default function HomePage() {
   // useRef untuk mengakses elemen DOM secara aman di React
   const statsSectionRef = useRef(null);
   const coursesSliderRef = useRef(null);
+  const [apiPopularCourses, setApiPopularCourses] = useState(null);
 
   // useEffect untuk menjalankan semua skrip setelah komponen dimuat
   useEffect(() => {
+    // declared to avoid ReferenceError in cleanup if not used
+    let counterObserver = null;
     // --- Inisialisasi semua slider Swiper.js ---
     const swiperInstances = [];
     if (coursesSliderRef.current) {
@@ -321,6 +278,41 @@ export default function HomePage() {
       scrollObserver.disconnect();
       if (counterObserver) counterObserver.disconnect();
       swiperInstances.forEach((swiper) => swiper.destroy(true, true));
+    };
+  }, []);
+
+  // Fetch popular courses dari API dan simpan di state
+  useEffect(() => {
+    let mounted = true;
+
+    async function fetchPopularCourses() {
+      try {
+        const res = await fetch("http://127.0.0.1:8000/api/courses/popular");
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const payload = await res.json();
+        if (!mounted) return;
+        if (payload && Array.isArray(payload.data)) {
+          // Transform ke bentuk objek yang CourseCard mengharapkan
+          const transformed = payload.data.map((c) => ({
+            image: c.thumbnail,
+            alt: c.name,
+            title: c.name,
+            author: c.category?.name ? `By ${c.category.name}` : "",
+            enrollment: "",
+            price: "",
+            link: `/detail-course/${c.slug}`,
+          }));
+          setApiPopularCourses(transformed);
+        }
+      } catch (err) {
+        console.error("Failed to fetch popular courses:", err);
+      }
+    }
+
+    fetchPopularCourses();
+
+    return () => {
+      mounted = false;
     };
   }, []);
 
@@ -615,11 +607,13 @@ export default function HomePage() {
                 className="relative swiper popular-courses-slider"
               >
                 <div className="swiper-wrapper">
-                  {popularCourses.map((course, index) => (
-                    <div className="h-auto pb-10 swiper-slide" key={index}>
-                      <CourseCard course={course} index={index} />
-                    </div>
-                  ))}
+                  {apiPopularCourses && apiPopularCourses.map(
+                    (course, index) => (
+                      <div className="h-auto pb-10 swiper-slide" key={index}>
+                        <CourseCard course={course} index={index} />
+                      </div>
+                    )
+                  )}
                 </div>
               </div>
             </section>
@@ -641,12 +635,6 @@ export default function HomePage() {
                     bertahun-tahun.
                   </p>
                 </div>
-                <Link
-                  href="#"
-                  className="font-semibold text-blue-600 hover:underline"
-                >
-                  Lihat Semua Mentor
-                </Link>
               </motion.div>
               <motion.div
                 className="flex flex-wrap justify-center gap-8"

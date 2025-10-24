@@ -95,7 +95,7 @@ export default function CertificatesPage() {
 
   return (
     <div className="relative min-h-screen font-sans bg-gray-50 pt-24 px-2 sm:px-6 md:px-8 lg:px-16">
-      <main className="container mx-auto py-8 relative z-10">
+      <main className="container mx-auto py-8 pb-24 md:pb-8 relative">
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
           <aside className="w-full lg:w-72">
             <div className="sticky top-48">
@@ -131,7 +131,7 @@ export default function CertificatesPage() {
 
             <AnimatedContent distance={50} delay={0.4}>
               {filteredCertificates.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8 isolate">
                   {filteredCertificates.map((cert, index) => (
                     <CertificateCard key={cert.id} cert={cert} index={index} />
                   ))}
