@@ -1,6 +1,5 @@
 "use client";
-
-import { useEffect, useRef, useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Swiper } from "swiper";
 import { Autoplay, Mousewheel, FreeMode } from "swiper/modules";
@@ -8,24 +7,12 @@ import "swiper/css";
 import "swiper/css/scrollbar";
 import Image from "next/image";
 import { motion, useInView } from "framer-motion";
-import Counter from "@/components/counter.jsx";
 import AnimatedContent from "@/components/animatedcontent.jsx";
 import SplitText from "@/components/splittext.jsx";
 import TextType from "@/components/texttype";
 import Magnet from "@/components/magnet.jsx";
-
-function AnimatedCounterWrapper({ value, ...props }) {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
-
-  const displayValue = isInView ? value : 0;
-
-  return (
-    <div ref={ref}>
-      <Counter value={displayValue} {...props} />
-    </div>
-  );
-}
+import CountUp from "@/components/countup";
+import { getStats } from "@/lib/apiService";
 
 const scrollAnimateVariants = {
   initial: { opacity: 0, y: 30 },
@@ -316,6 +303,22 @@ export default function HomePage() {
     };
   }, []);
 
+  const [stats, setStats] = useState({
+    courses: 0,
+    categories: 0,
+    students: 0,
+    mentors: 0,
+    benefits: 0,
+  });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      const data = await getStats();
+      setStats(data);
+    };
+    fetchStats();
+  }, []);
+
   return (
     <>
       <main className="pt-14">
@@ -417,6 +420,7 @@ export default function HomePage() {
         </div>
 
         <div className="w-full">
+          {/* Stats Section */}
           <section className="py-16">
             <div className="w-full px-2 sm:px-4 md:px-8 lg:px-16">
               <motion.div
@@ -434,14 +438,14 @@ export default function HomePage() {
                   <div className="absolute w-32 h-32 bg-blue-400 rounded-full opacity-50 -top-12 -right-12 blur-3xl"></div>
                   <div className="relative">
                     <h3 className="flex items-center justify-center text-4xl font-bold text-gray-600">
-                      <AnimatedCounterWrapper
-                        value={250}
-                        places={[100, 10, 1]}
-                        fontSize={36}
-                        textColor="currentColor"
-                        gradientHeight={0}
+                      <CountUp
+                        from={0}
+                        to={stats.courses}
+                        separator=","
+                        direction="up"
+                        duration={1}
+                        className="count-up-text text-shadow-white text-5xl font-normal text-blue-800"
                       />
-                      <span>+</span>
                     </h3>
                     <p className="mt-2 text-sm text-gray-600">
                       Courses by our best mentors
@@ -457,14 +461,14 @@ export default function HomePage() {
                   <div className="absolute w-32 h-32 bg-green-400 rounded-full opacity-50 -top-12 -right-12 blur-3xl"></div>
                   <div className="relative">
                     <h3 className="flex items-center justify-center text-4xl font-bold text-gray-600">
-                      <AnimatedCounterWrapper
-                        value={1000}
-                        places={[1000, 100, 10, 1]}
-                        fontSize={36}
-                        textColor="currentColor"
-                        gradientHeight={0}
+                      <CountUp
+                        from={0}
+                        to={stats.students}
+                        separator=","
+                        direction="up"
+                        duration={1}
+                        className="count-up-text text-shadow-white text-5xl font-normal text-green-800"
                       />
-                      <span>+</span>
                     </h3>
                     <p className="mt-2 text-sm text-gray-600">
                       Students Enrolled
@@ -480,14 +484,14 @@ export default function HomePage() {
                   <div className="absolute w-32 h-32 bg-purple-400 rounded-full opacity-50 -top-12 -right-12 blur-3xl"></div>
                   <div className="relative">
                     <h3 className="flex items-center justify-center text-4xl font-bold text-gray-600">
-                      <AnimatedCounterWrapper
-                        value={15}
-                        places={[10, 1]}
-                        fontSize={36}
-                        textColor="currentColor"
-                        gradientHeight={0}
+                      <CountUp
+                        from={0}
+                        to={stats.mentors}
+                        separator=","
+                        direction="up"
+                        duration={0.5}
+                        className="count-up-text text-shadow-white text-5xl font-normal text-purple-800"
                       />
-                      <span>+</span>
                     </h3>
                     <p className="mt-2 text-sm text-gray-600">Expert Mentors</p>
                   </div>
@@ -501,17 +505,17 @@ export default function HomePage() {
                   <div className="absolute w-32 h-32 rounded-full opacity-50 -top-12 -right-12 bg-amber-400 blur-3xl"></div>
                   <div className="relative">
                     <h3 className="flex items-center justify-center text-4xl font-bold text-gray-600">
-                      <AnimatedCounterWrapper
-                        value={2400}
-                        places={[1000, 100, 10, 1]}
-                        fontSize={36}
-                        textColor="currentColor"
-                        gradientHeight={0}
+                      <CountUp
+                        from={0}
+                        to={stats.benefits}
+                        separator=","
+                        direction="up"
+                        duration={1}
+                        className="count-up-text text-shadow-white text-5xl font-normal text-amber-500"
                       />
-                      <span>+</span>
                     </h3>
                     <p className="mt-2 text-sm text-gray-600">
-                      Positive Reviews
+                      Positive Benefits
                     </p>
                   </div>
                 </motion.div>
@@ -607,13 +611,12 @@ export default function HomePage() {
                 className="relative swiper popular-courses-slider"
               >
                 <div className="swiper-wrapper">
-                  {apiPopularCourses && apiPopularCourses.map(
-                    (course, index) => (
+                  {apiPopularCourses &&
+                    apiPopularCourses.map((course, index) => (
                       <div className="h-auto pb-10 swiper-slide" key={index}>
                         <CourseCard course={course} index={index} />
                       </div>
-                    )
-                  )}
+                    ))}
                 </div>
               </div>
             </section>

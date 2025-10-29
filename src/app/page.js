@@ -1,28 +1,15 @@
 "use client";
-import { useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import Image from "next/image";
 import { FiTarget, FiAward, FiUsers } from "react-icons/fi";
 import { FaQuoteLeft } from "react-icons/fa";
 import Link from "next/link";
-import Counter from "@/components/counter.jsx";
 import AnimatedContent from "@/components/animatedcontent.jsx";
 import SplitText from "@/components/splittext.jsx";
-import Iridescence from "@/components/iridescene";
 import ScrollFloat from "@/components/scrollfloat";
-// Wrapper component to trigger animation on view
-function AnimatedCounterWrapper({ value, ...props }) {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
-
-  const displayValue = isInView ? value : 0;
-
-  return (
-    <div ref={ref}>
-      <Counter value={displayValue} {...props} />
-    </div>
-  );
-}
+import { getStats } from "@/lib/apiService";
+import CountUp from "@/components/countup";
 
 // Animation variants for scroll animations
 const scrollAnimateVariants = {
@@ -61,6 +48,21 @@ export default function NewLandingPage() {
       img: "https://i.pravatar.cc/150?u=a042581f4e29026706d",
     },
   ];
+  const [stats, setStats] = useState({
+    courses: 0,
+    categories: 0,
+    students: 0,
+    mentors: 0,
+    benefits: 0,
+  });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      const data = await getStats();
+      setStats(data);
+    };
+    fetchStats();
+  }, []);
 
   return (
     <>
@@ -314,14 +316,14 @@ export default function NewLandingPage() {
                 <div className="absolute w-32 h-32 bg-blue-400 rounded-full opacity-50 -top-12 -right-12 blur-3xl"></div>
                 <div className="relative">
                   <h3 className="flex items-center justify-center text-4xl font-bold text-gray-600">
-                    <AnimatedCounterWrapper
-                      value={250}
-                      places={[100, 10, 1]}
-                      fontSize={36}
-                      textColor="currentColor"
-                      gradientHeight={0}
+                    <CountUp
+                      from={0}
+                      to={stats.courses}
+                      separator=","
+                      direction="up"
+                      duration={1}
+                      className="count-up-text text-shadow-white text-5xl font-normal text-blue-800"
                     />
-                    <span>+</span>
                   </h3>
                   <p className="mt-2 text-sm text-gray-600">
                     Courses by our best mentors
@@ -337,14 +339,14 @@ export default function NewLandingPage() {
                 <div className="absolute w-32 h-32 bg-green-400 rounded-full opacity-50 -top-12 -right-12 blur-3xl"></div>
                 <div className="relative">
                   <h3 className="flex items-center justify-center text-4xl font-bold text-gray-600">
-                    <AnimatedCounterWrapper
-                      value={1000}
-                      places={[1000, 100, 10, 1]}
-                      fontSize={36}
-                      textColor="currentColor"
-                      gradientHeight={0}
+                    <CountUp
+                      from={0}
+                      to={stats.students}
+                      separator=","
+                      direction="up"
+                      duration={1}
+                      className="count-up-text text-shadow-white text-5xl font-normal text-green-800"
                     />
-                    <span>+</span>
                   </h3>
                   <p className="mt-2 text-sm text-gray-600">
                     Students Enrolled
@@ -360,14 +362,14 @@ export default function NewLandingPage() {
                 <div className="absolute w-32 h-32 bg-purple-400 rounded-full opacity-50 -top-12 -right-12 blur-3xl"></div>
                 <div className="relative">
                   <h3 className="flex items-center justify-center text-4xl font-bold text-gray-600">
-                    <AnimatedCounterWrapper
-                      value={15}
-                      places={[10, 1]}
-                      fontSize={36}
-                      textColor="currentColor"
-                      gradientHeight={0}
+                    <CountUp
+                      from={0}
+                      to={stats.mentors}
+                      separator=","
+                      direction="up"
+                      duration={0.5}
+                      className="count-up-text text-shadow-white text-5xl font-normal text-purple-800"
                     />
-                    <span>+</span>
                   </h3>
                   <p className="mt-2 text-sm text-gray-600">Expert Mentors</p>
                 </div>
@@ -381,16 +383,18 @@ export default function NewLandingPage() {
                 <div className="absolute w-32 h-32 rounded-full opacity-50 -top-12 -right-12 bg-amber-400 blur-3xl"></div>
                 <div className="relative">
                   <h3 className="flex items-center justify-center text-4xl font-bold text-gray-600">
-                    <AnimatedCounterWrapper
-                      value={2400}
-                      places={[1000, 100, 10, 1]}
-                      fontSize={36}
-                      textColor="currentColor"
-                      gradientHeight={0}
+                    <CountUp
+                      from={0}
+                      to={stats.benefits}
+                      separator=","
+                      direction="up"
+                      duration={1}
+                      className="count-up-text text-shadow-white text-5xl font-normal text-amber-500"
                     />
-                    <span>+</span>
                   </h3>
-                  <p className="mt-2 text-sm text-gray-600">Positive Reviews</p>
+                  <p className="mt-2 text-sm text-gray-600">
+                    Positive Benefits
+                  </p>
                 </div>
               </motion.div>
             </motion.div>
