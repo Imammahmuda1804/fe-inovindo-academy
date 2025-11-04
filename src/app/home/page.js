@@ -13,6 +13,7 @@ import TextType from "@/components/texttype";
 import Magnet from "@/components/magnet.jsx";
 import CountUp from "@/components/countup";
 import { getStats } from "@/lib/apiService";
+import api from "@/lib/apiService";
 
 const scrollAnimateVariants = {
   initial: { opacity: 0, y: 30 },
@@ -53,6 +54,18 @@ const categories = [
 ];
 
 function CourseCard({ course, index }) {
+  // normalize image src to avoid Invalid URL errors in next/image
+  const rawSrc = course?.image;
+  let imageSrc = "/assets/images/placeholder.png";
+  if (typeof rawSrc === "string") {
+    const src = rawSrc.trim();
+    if (src.startsWith("http") || src.startsWith("/")) {
+      imageSrc = src;
+    } else if (src.length > 0) {
+      // treat as relative path
+      imageSrc = src.startsWith("./") ? src.slice(1) : `/${src}`;
+    }
+  }
   return (
     <motion.div
       className="relative flex flex-col h-full overflow-hidden text-left duration-300 border bg-white/30 backdrop-blur-lg border-white/40 rounded-2xl group"
@@ -63,13 +76,13 @@ function CourseCard({ course, index }) {
     >
       <div className="relative overflow-hidden w-full aspect-[16/9] rounded-t-2xl">
         <Image
-          src={course.image}
-          alt={course.alt}
+          src={imageSrc}
+          alt={course.alt || course.title || "Course image"}
           fill
           className="object-cover transition-transform duration-500 ease-in-out group-hover:scale-110"
           // If image is an external URL, avoid Next.js image optimization to prevent server-side proxy fetch errors
           unoptimized={
-            typeof course.image === "string" && course.image.startsWith("http")
+            typeof imageSrc === "string" && imageSrc.startsWith("http")
           }
         />
       </div>
@@ -274,9 +287,8 @@ export default function HomePage() {
 
     async function fetchPopularCourses() {
       try {
-        const res = await fetch("http://127.0.0.1:8000/api/courses/popular");
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const payload = await res.json();
+        const response = await api.get("/courses/popular");
+        const payload = response.data;
         if (!mounted) return;
         if (payload && Array.isArray(payload.data)) {
           // Transform ke bentuk objek yang CourseCard mengharapkan
@@ -284,7 +296,7 @@ export default function HomePage() {
             image: c.thumbnail,
             alt: c.name,
             title: c.name,
-            author: c.category?.name ? `By ${c.category.name}` : "",
+            author: c.category?.name ? `${c.category.name}` : "",
             enrollment: "",
             price: "",
             link: `/detail-course/${c.slug}`,

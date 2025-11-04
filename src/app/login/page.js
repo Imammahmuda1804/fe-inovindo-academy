@@ -5,6 +5,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { FaEnvelope, FaLock, FaUser, FaGoogle } from "react-icons/fa";
 import FloatingLabelInput from "@/components/FloatingLabelInput.jsx";
+import { useRouter } from "next/navigation";
+import api from "@/lib/apiService";
 
 import "./login.css";
 
@@ -25,14 +27,34 @@ const SocialLoginButton = () => (
 );
 
 const AuthForm = ({ isLoginView, onSwitch }) => {
+  const router = useRouter();
   const [formState, setFormState] = useState({
     name: "",
     email: "",
     password: "",
   });
+  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     setFormState({ ...formState, [e.target.name]: e.target.value });
+  };
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError("");
+    try {
+      const response = await api.post("/login", {
+        email: formState.email,
+        password: formState.password,
+      });
+      if (response.data.access_token) {
+        localStorage.setItem("token", response.data.access_token);
+        router.push("/home");
+      }
+    } catch (err) {
+      setError("Login failed. Please check your credentials.");
+      console.error(err);
+    }
   };
 
   return (
@@ -55,7 +77,7 @@ const AuthForm = ({ isLoginView, onSwitch }) => {
               : "Mulai perjalanan belajar Anda."}
           </p>
         </div>
-        <form action="#">
+        <form onSubmit={handleLogin}>
           {!isLoginView && (
             <FloatingLabelInput
               type="text"
@@ -91,7 +113,10 @@ const AuthForm = ({ isLoginView, onSwitch }) => {
             </Link>
           )}
 
+          {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+
           <button
+            type="submit"
             className={`w-full p-3 font-bold text-white rounded-lg shadow-lg hover:shadow-blue-500/40 bg-gradient-to-r from-blue-600 to-green-500 ${
               isLoginView ? "mt-2" : "mt-6"
             }`}

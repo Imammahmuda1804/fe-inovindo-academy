@@ -7,9 +7,15 @@ import {
   FaUserTie,
   FaTimes,
   FaSignInAlt,
+  FaUser,
+  FaCog,
+  FaSignOutAlt,
+  FaCreditCard,
 } from "react-icons/fa";
-import { motion, useScroll, useMotionValueEvent } from "framer-motion";
+import { motion } from "framer-motion";
 import Magnet from "./magnet";
+import { useRouter } from "next/navigation";
+
 const top = {
   closed: {
     rotate: 0,
@@ -42,11 +48,17 @@ const bottom = {
 };
 
 export default function Header() {
-  const [searchOpen, setSearchOpen] = useState(false);
+  const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const searchInputMobile = useRef(null);
   const searchInputDesktop = useRef(null);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isProfileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const profileDropdownRef = useRef(null);
+
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -59,8 +71,36 @@ export default function Header() {
     };
   }, []);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('token');
+      setIsLoggedIn(!!token);
+    }
+
+    const handleClickOutside = (event) => {
+      if (
+        profileDropdownRef.current &&
+        !profileDropdownRef.current.contains(event.target)
+      ) {
+        setProfileDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const handleSearch = (e) => {
+    if (e.key === "Enter" && searchQuery.trim() !== "") {
+      router.push(`/courses?search=${searchQuery}`);
+    }
+  };
+
   const handleOpenSearch = (isMobile = false) => {
     setSearchOpen(true);
+    setSearchQuery("");
     setTimeout(() => {
       if (isMobile && searchInputMobile.current) {
         searchInputMobile.current.focus();
@@ -72,6 +112,13 @@ export default function Header() {
 
   const handleCloseSearch = () => {
     setSearchOpen(false);
+  };
+
+  const handleLogout = () => {
+    // TODO: Implement actual logout logic (e.g., remove token, call API)
+    setIsLoggedIn(false);
+    setProfileDropdownOpen(false);
+    router.push("/login");
   };
 
   return (
@@ -192,6 +239,9 @@ export default function Header() {
                     type="text"
                     placeholder="Cari kursus..."
                     className="w-full h-full pl-10 pr-10 text-gray-700 bg-gray-100 border border-transparent rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={handleSearch}
                   />
                   <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                     <svg
@@ -245,7 +295,6 @@ export default function Header() {
                       : "opacity-100 scale-100 visible"
                   }`}
                 >
-                  {/* === PERUBAHAN DI SINI === */}
                   <Magnet padding={15} magnetStrength={2}>
                     <motion.a
                       href="/home"
@@ -291,6 +340,9 @@ export default function Header() {
                       type="text"
                       placeholder="Cari kursus..."
                       className="w-full h-full pl-10 pr-10 text-gray-700 bg-gray-100 border border-transparent rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyDown={handleSearch}
                     />
                     <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                       <svg
@@ -320,19 +372,64 @@ export default function Header() {
             </div>
 
             {/* Right Section */}
-            <div className="flex-shrink-0 md:flex-1 md:flex md:justify-end">
-              <a
-                href="#"
-                className="flex items-center gap-2 p-2 font-medium text-blue-600 transition-colors border border-blue-200 rounded-lg group hover:bg-blue-600 hover:text-white sm:px-4 sm:py-2"
-              >
-                <FaSignInAlt className="transition-all group-hover:text-white" />
-                <span className="hidden sm:inline">Masuk</span>
-              </a>
+            <div className="relative flex-shrink-0 md:flex-1 md:flex md:justify-end">
+              {isLoggedIn ? (
+                <div ref={profileDropdownRef}>
+                  <button
+                    onClick={() => setProfileDropdownOpen(!isProfileDropdownOpen)}
+                    className="flex items-center justify-center w-10 h-10 text-gray-600 bg-gray-200 rounded-full hover:bg-gray-300"
+                  >
+                    <FaUser />
+                  </button>
+                  {isProfileDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50"
+                    >
+                      <a
+                        href="/my-courses"
+                        className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        <FaBook /> My Courses
+                      </a>
+                      <a
+                        href="/settings"
+                        className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        <FaCog /> Settings
+                      </a>
+                      <a
+                        href="/transactions"
+                        className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        <FaCreditCard /> Transactions
+                      </a>
+                      <div className="border-t border-gray-200 my-1"></div>
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-3 w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                      >
+                        <FaSignOutAlt /> Logout
+                      </button>
+                    </motion.div>
+                  )}
+                </div>
+              ) : (
+                <a
+                  href="/login"
+                  className="flex items-center gap-2 p-2 font-medium text-blue-600 transition-colors border border-blue-200 rounded-lg group hover:bg-blue-600 hover:text-white sm:px-4 sm:py-2"
+                >
+                  <FaSignInAlt className="transition-all group-hover:text-white" />
+                  <span className="hidden sm:inline">Masuk</span>
+                </a>
+              )}
             </div>
           </nav>
           {mobileMenuOpen && (
             <div className="p-2 mt-4 bg-white rounded-lg shadow-md md:hidden">
-              {/* === PERUBAHAN DI SINI (MOBILE) === */}
               <motion.a
                 href="/home"
                 className="flex items-center gap-4 px-3 py-3 text-base text-gray-700 transition-colors duration-200 rounded-lg hover:bg-gray-100"

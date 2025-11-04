@@ -2,11 +2,14 @@
 const nextConfig = {
   images: {
     // Allow loading images from external hosts used in development and API fixtures.
-    // Using a wildcard hostname is permissive (use specific domains in production).
     remotePatterns: [
       {
         protocol: "https",
         hostname: "**",
+      },
+      {
+        protocol: "http",
+        hostname: "127.0.0.1",
       },
     ],
   },
