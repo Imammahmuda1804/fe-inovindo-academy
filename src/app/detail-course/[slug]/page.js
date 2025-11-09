@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import AnimatedContent from "@/components/animatedcontent.jsx";
 import DetailCourseSkeleton from "@/components/DetailCourseSkeleton.jsx";
-import api from "@/lib/apiService";
+import { getCourseBySlug } from "@/lib/apiService";
 import { ensureAbsoluteUrl } from "@/lib/urlHelpers";
 import {
   FaCheckCircle,
@@ -39,74 +40,26 @@ const DetailCoursePage = ({ params }) => {
 
   useEffect(() => {
     const fetchCourseData = async () => {
+      setIsLoading(true);
       try {
-        // use axios instance from src/lib/apiService (handles baseURL and headers)
-        const response = await api.get(`/courses/${resolvedParams.slug}`);
-        const data = response.data;
-
+        const data = await getCourseBySlug(resolvedParams.slug);
         if (data && data.status === "success") {
-          console.log("API Response Data:", data.data);
-          // Log mentor data specifically
-          const mentorData =
-            data.data.mentor ||
-            data.data.user ||
-            data.data.instructor ||
-            data.data.author ||
-            data.data.mentors?.[0]?.user ||
-            data.data.mentors?.[0];
-
-          // Debug mentor data structure
-          console.log("Full API Response:", data);
-          console.log("Course Data:", data.data);
-          console.log("Mentor Raw Data:", {
-            mentor: data.data.mentor,
-            user: data.data.user,
-            instructor: data.data.instructor,
-            author: data.data.author,
-            mentorsArray: data.data.mentors,
-            firstMentor: data.data.mentors?.[0],
-            firstMentorUser: data.data.mentors?.[0]?.user,
-          });
-          console.log("Selected Mentor Data:", mentorData);
-          console.log("Mentor Job Data:", {
-            mentorJob: mentorData?.job,
-            firstMentorJob: data.data.mentors?.[0]?.job,
-            allMentors: data.data.mentors,
-          });
-          console.log("Mentor About Fields:", {
-            mentorAbout: mentorData?.about,
-            mentorDescription: mentorData?.description,
-            mentorBio: mentorData?.bio,
-            originalMentorAbout: data.data.mentor?.about,
-            firstMentorAbout: data.data.mentors?.[0]?.about,
-          });
-          console.log("Mentor Statistics:", {
-            courses: {
-              total_courses: mentorData?.total_courses,
-              courses_count: mentorData?.courses_count,
-              count: mentorData?.count,
-              statistics_courses: mentorData?.statistics?.courses,
-            },
-            students: {
-              total_students: mentorData?.total_students,
-              students_count: mentorData?.students_count,
-              student_count: mentorData?.student_count,
-              statistics_students: mentorData?.statistics?.students,
-            },
-          });
-
           setCourseData(data.data);
         } else {
-          console.error("Failed to fetch course data", data);
+          console.error("Failed to fetch course data:", data);
+          setCourseData(null);
         }
       } catch (error) {
         console.error("Error fetching course data:", error);
+        setCourseData(null);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchCourseData();
+    if (resolvedParams.slug) {
+      fetchCourseData();
+    }
   }, [resolvedParams.slug]);
 
   const toggleSection = (section) => {
@@ -463,19 +416,21 @@ const DetailCoursePage = ({ params }) => {
                           Rp {Number(price)?.toLocaleString("id-ID")}
                         </span>
                       </div>
-                      <motion.button
-                        className="w-full px-8 py-4 text-lg font-semibold text-white transition-all duration-300 rounded-xl bg-gradient-to-r from-green-400 to-blue-500 shadow-lg hover:shadow-blue-500/50"
-                        whileHover={{
-                          scale: 1.05,
-                          boxShadow: "0px 15px 25px rgba(37, 99, 235, 0.4)",
-                        }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <div className="flex items-center justify-center gap-3">
-                          <FaShoppingCart />
-                          <span>Beli Kursus Ini</span>
-                        </div>
-                      </motion.button>
+                      <Link href={`/payment/${resolvedParams.slug}`} passHref>
+                        <motion.button
+                          className="w-full px-8 py-4 text-lg font-semibold text-white transition-all duration-300 rounded-xl bg-gradient-to-r from-green-400 to-blue-500 shadow-lg hover:shadow-blue-500/50"
+                          whileHover={{
+                            scale: 1.05,
+                            boxShadow: "0px 15px 25px rgba(37, 99, 235, 0.4)",
+                          }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          <div className="flex items-center justify-center gap-3">
+                            <FaShoppingCart />
+                            <span>Beli Kursus Ini</span>
+                          </div>
+                        </motion.button>
+                      </Link>
 
                       <ul className="mt-6 space-y-3 text-gray-700">
                         {[

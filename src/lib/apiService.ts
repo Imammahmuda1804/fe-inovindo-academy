@@ -39,6 +39,39 @@ api.interceptors.response.use(
   }
 );
 
+export const getCourses = async (params = {}) => {
+  try {
+    const response = await api.get("/courses", { params });
+    if (Array.isArray(response.data.data)) {
+      return response.data.data;
+    }
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+    console.warn("Unexpected response structure for courses:", response.data);
+    return [];
+  } catch (error) {
+    console.error("Error fetching courses:", error);
+    return [];
+  }
+};
+
+export const getCategories = async () => {
+  try {
+    const response = await api.get("/categories");
+    // The API returns { status: ..., message: ..., data: { "id1": {...}, "id2": {...} } }
+    // We need to get the values from the inner 'data' object.
+    if (response.data && typeof response.data.data === 'object' && response.data.data !== null) {
+      return Object.values(response.data.data);
+    }
+    console.warn("Unexpected response structure for categories:", response.data);
+    return [];
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    return [];
+  }
+};
+
 export const getStats = async () => {
   try {
     const response = await api.get("/counts");
@@ -86,6 +119,33 @@ export const getCourseBySlug = async (slug) => {
   } catch (error) {
     console.error(`Error fetching course ${slug}:`, error);
     return null;
+  }
+};
+
+export const getPricingByCourseId = async (courseId) => {
+  try {
+    const response = await api.get(`/courses/${courseId}/pricings`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching pricing for course ${courseId}:`, error);
+    return null;
+  }
+};
+
+export const getCoursesByCategory = async (categorySlug) => {
+  try {
+    const response = await api.get(`/courses/category/${categorySlug}`);
+    if (Array.isArray(response.data.data)) {
+      return response.data.data;
+    }
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+    console.warn("Unexpected response structure for courses by category:", response.data);
+    return [];
+  } catch (error) {
+    console.error(`Error fetching courses for category ${categorySlug}:`, error);
+    return [];
   }
 };
 
