@@ -209,7 +209,6 @@ const DetailCoursePage = ({ params }) => {
                       <Image
                         src={
                           ensureAbsoluteUrl(mentor?.photo) ||
-                          ensureAbsoluteUrl(mentor?.avatar) ||
                           "https://via.placeholder.com/56x56"
                         }
                         alt="Instructor"
@@ -386,9 +385,8 @@ const DetailCoursePage = ({ params }) => {
                     <div className="p-6 bg-white rounded-2xl shadow-lg flex flex-col sm:flex-row items-center gap-4 sm:gap-8">
                       <Image
                         src={
-                          ensureAbsoluteUrl(mentor?.foto) ||
-                          ensureAbsoluteUrl(mentor?.avatar) ||
-                          "https://via.placeholder.com/100x100"
+                          ensureAbsoluteUrl(mentor?.photo) ||
+                          "https://via.placeholder.com/56x56"
                         }
                         alt="Mentor Profile Picture"
                         width={100}

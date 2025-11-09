@@ -12,8 +12,7 @@ import SplitText from "@/components/splittext.jsx";
 import TextType from "@/components/texttype";
 import Magnet from "@/components/magnet.jsx";
 import CountUp from "@/components/countup";
-import { getStats } from "@/lib/apiService";
-import api from "@/lib/apiService";
+import { getStats, getPopularCourses } from "@/lib/apiService";
 
 const scrollAnimateVariants = {
   initial: { opacity: 0, y: 30 },
@@ -286,25 +285,21 @@ export default function HomePage() {
     let mounted = true;
 
     async function fetchPopularCourses() {
-      try {
-        const response = await api.get("/courses/popular");
-        const payload = response.data;
-        if (!mounted) return;
-        if (payload && Array.isArray(payload.data)) {
-          // Transform ke bentuk objek yang CourseCard mengharapkan
-          const transformed = payload.data.map((c) => ({
-            image: c.thumbnail,
-            alt: c.name,
-            title: c.name,
-            author: c.category?.name ? `${c.category.name}` : "",
-            enrollment: "",
-            price: "",
-            link: `/detail-course/${c.slug}`,
-          }));
-          setApiPopularCourses(transformed);
-        }
-      } catch (err) {
-        console.error("Failed to fetch popular courses:", err);
+      const payload = await getPopularCourses();
+      if (!mounted) return;
+
+      if (payload && Array.isArray(payload.data)) {
+        // Transform ke bentuk objek yang CourseCard mengharapkan
+        const transformed = payload.data.map((c) => ({
+          image: c.thumbnail,
+          alt: c.name,
+          title: c.name,
+          author: c.category?.name ? `${c.category.name}` : "",
+          enrollment: "",
+          price: "",
+          link: `/detail-course/${c.slug}`,
+        }));
+        setApiPopularCourses(transformed);
       }
     }
 

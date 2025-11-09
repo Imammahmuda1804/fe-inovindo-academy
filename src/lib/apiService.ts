@@ -49,4 +49,44 @@ export const getStats = async () => {
   }
 };
 
+export const getPopularCourses = async () => {
+  try {
+    const response = await api.get("/courses/popular");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching popular courses:", error);
+    return null;
+  }
+};
+
+export const loginUser = async (credentials) => {
+  const response = await api.post("/login", credentials);
+  return response.data;
+};
+
+export const registerUser = async (userData) => {
+  const response = await api.post("/register", userData);
+  return response.data;
+};
+
+export const logoutUser = async () => {
+  const response = await api.post("/logout");
+  return response.data;
+};
+
+export const getMe = async () => {
+  const response = await api.get("/me");
+  return response.data;
+};
+
+export const getCourseBySlug = async (slug) => {
+  try {
+    const response = await api.get(`/courses/${slug}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching course ${slug}:`, error);
+    return null;
+  }
+};
+
 export default api;

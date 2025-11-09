@@ -8,6 +8,15 @@ body {
   scroll-behavior: smooth;
 }
 
+/* Hide scrollbar for all browsers */
+html, body {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;  /* IE and Edge */
+}
+::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, and Opera */
+}
+
 /* Utility to hide scrollbars */
 .no-scrollbar::-webkit-scrollbar {
   display: none;

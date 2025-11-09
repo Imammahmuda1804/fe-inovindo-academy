@@ -3,11 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { FaEnvelope, FaLock, FaUser, FaGoogle } from "react-icons/fa";
+import { FaEnvelope, FaLock, FaUser, FaGoogle, FaCheckCircle } from "react-icons/fa";
 import FloatingLabelInput from "@/components/FloatingLabelInput.jsx";
 import { useRouter } from "next/navigation";
-import api from "@/lib/apiService";
-
+import { loginUser, registerUser } from "@/lib/apiService";
 import "./login.css";
 
 const SocialLoginButton = () => (
@@ -26,34 +25,88 @@ const SocialLoginButton = () => (
   </>
 );
 
+import { useModal } from "@/context/ModalContext";
+
+import { useAuth } from "@/context/AuthContext";
+
 const AuthForm = ({ isLoginView, onSwitch }) => {
   const router = useRouter();
+  const { openModal, closeModal } = useModal();
+  const { refetchUser } = useAuth(); // Use AuthContext
+
   const [formState, setFormState] = useState({
     name: "",
     email: "",
     password: "",
+    password_confirmation: "",
   });
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormState({ ...formState, [e.target.name]: e.target.value });
   };
 
-  const handleLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    try {
-      const response = await api.post("/login", {
-        email: formState.email,
-        password: formState.password,
-      });
-      if (response.data.access_token) {
-        localStorage.setItem("token", response.data.access_token);
-        router.push("/home");
+    setIsLoading(true);
+
+    if (isLoginView) {
+      try {
+        const data = await loginUser({
+          email: formState.email,
+          password: formState.password,
+        });
+        if (data.access_token) {
+          localStorage.setItem("token", data.access_token);
+          await refetchUser(); // Fetch user data and update context
+          router.push("/home");
+        }
+      } catch (err) {
+        setError("Login failed. Please check your credentials.");
+        console.error(err);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (err) {
-      setError("Login failed. Please check your credentials.");
-      console.error(err);
+    } else {
+      // Register logic
+      if (formState.password !== formState.password_confirmation) {
+        setError("Password dan konfirmasi password tidak cocok.");
+        setIsLoading(false);
+        return;
+      }
+      try {
+        await registerUser({
+          name: formState.name,
+          email: formState.email,
+          password: formState.password,
+          password_confirmation: formState.password_confirmation,
+        });
+        // On successful registration, show a success modal
+        openModal({
+          title: "Registrasi Berhasil",
+          children: "Akun Anda telah berhasil dibuat. Silakan login untuk melanjutkan.",
+          confirmText: "Lanjutkan",
+          hideCancelButton: true,
+          onConfirm: () => {
+            closeModal();
+            onSwitch();
+          },
+          variant: 'success',
+        });
+      } catch (err) {
+        let specificErrorMessage = "Registration failed. Please check your data.";
+        if (err.response?.data?.email && Array.isArray(err.response.data.email) && err.response.data.email.length > 0) {
+          specificErrorMessage = err.response.data.email[0];
+        } else if (err.response?.data?.message) {
+          specificErrorMessage = err.response.data.message;
+        }
+        setError(specificErrorMessage);
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -77,7 +130,7 @@ const AuthForm = ({ isLoginView, onSwitch }) => {
               : "Mulai perjalanan belajar Anda."}
           </p>
         </div>
-        <form onSubmit={handleLogin}>
+        <form onSubmit={handleSubmit}>
           {!isLoginView && (
             <FloatingLabelInput
               type="text"
@@ -104,6 +157,16 @@ const AuthForm = ({ isLoginView, onSwitch }) => {
             value={formState.password}
             onChange={handleChange}
           />
+          {!isLoginView && (
+            <FloatingLabelInput
+              type="password"
+              label="Konfirmasi Password"
+              icon={FaLock}
+              name="password_confirmation"
+              value={formState.password_confirmation}
+              onChange={handleChange}
+            />
+          )}
 
           {isLoginView && (
             <Link href="/reset-password">
@@ -117,11 +180,9 @@ const AuthForm = ({ isLoginView, onSwitch }) => {
 
           <button
             type="submit"
-            className={`w-full p-3 font-bold text-white rounded-lg shadow-lg hover:shadow-blue-500/40 bg-gradient-to-r from-blue-600 to-green-500 ${
-              isLoginView ? "mt-2" : "mt-6"
-            }`}
-          >
-            {isLoginView ? "Masuk" : "Daftar"}
+            disabled={isLoading}
+            className={`w-full p-3 font-bold text-white rounded-lg shadow-lg hover:shadow-blue-500/40 bg-gradient-to-r from-blue-600 to-green-500 transition-colors ${isLoginView ? "mt-2" : "mt-6"} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}>
+            {isLoading ? (isLoginView ? 'Logging In...' : 'Registering...') : (isLoginView ? "Masuk" : "Daftar")}
           </button>
 
           <SocialLoginButton />
