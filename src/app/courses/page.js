@@ -302,6 +302,49 @@ export default function CoursesPage() {
     }
   }, [currentPage, isLoading]);
 
+  // Effect to pre-fetch all prices for the current course list
+  useEffect(() => {
+    const fetchAllPrices = async (courses) => {
+      const pricesToFetch = courses.filter(course => !(course.id in priceCache));
+      if (pricesToFetch.length === 0) return;
+
+      const pricePromises = pricesToFetch.map(course => 
+        getPricingByCourseId(course.id)
+          .then(apiResponse => {
+            const courseDataWithPricings = apiResponse?.data;
+            const pricings = Array.isArray(courseDataWithPricings?.pricings) ? courseDataWithPricings.pricings : [];
+            let minPrice = null;
+            if (pricings.length > 0) {
+              const amounts = pricings.map(p => p.price);
+              minPrice = Math.min(...amounts);
+            }
+            return { courseId: course.id, price: minPrice };
+          })
+          .catch(error => {
+            console.error(`Error pre-fetching price for course ${course.id}:`, error);
+            return { courseId: course.id, price: null }; // Cache error state
+          })
+      );
+
+      const settledPrices = await Promise.all(pricePromises);
+      
+      const newPriceEntries = settledPrices.reduce((acc, result) => {
+        if (result) {
+          acc[result.courseId] = result.price;
+        }
+        return acc;
+      }, {});
+
+      if (Object.keys(newPriceEntries).length > 0) {
+        setPriceCache(prevCache => ({ ...prevCache, ...newPriceEntries }));
+      }
+    };
+
+    if (allCourses.length > 0) {
+      fetchAllPrices(allCourses);
+    }
+  }, [allCourses, priceCache]);
+
   const activeCourse = featuredCourses[activeIndex];
   const inactiveCourses = featuredCourses.filter((_, i) => i !== activeIndex);
 
@@ -329,12 +372,43 @@ export default function CoursesPage() {
     }
   };
 
-  const FilterButton = ({ label, value, currentFilter, setFilter, icon: IconComponent }) => (
+  const prefetchCourses = async (categoryName) => {
+    if (!categoriesLoaded) return;
+
+    const categoryObject = allCategories.find(c => c.name === categoryName);
+    
+    const params = new URLSearchParams();
+    if (categoryName !== 'All' && categoryObject) {
+      params.set('category', categoryObject.slug);
+    }
+    const cacheKey = params.toString() || 'all';
+
+    if (coursesCache[cacheKey]) {
+      return; // Already cached or being prefetched
+    }
+
+    try {
+      let coursesData = [];
+      if (categoryName !== 'All' && categoryObject) {
+        coursesData = await getCoursesByCategory(categoryObject.slug);
+      } else {
+        // Prefetching for "All" category
+        coursesData = await getCourses({});
+      }
+      setCoursesCache(prevCache => ({ ...prevCache, [cacheKey]: coursesData }));
+    } catch (error) {
+      console.error(`Prefetch failed for ${categoryName}:`, error);
+      // Don't pollute cache on error
+    }
+  };
+
+  const FilterButton = ({ label, value, currentFilter, setFilter, icon: IconComponent, onMouseEnter }) => (
     <button
       onClick={() => {
         setFilter(value);
         setCurrentPage(1);
       }}
+      onMouseEnter={onMouseEnter}
       className={`px-4 py-2 text-sm font-semibold rounded-full transition-all duration-300 border flex items-center gap-2 ${
         currentFilter === value
           ? "bg-blue-600 text-white border-blue-600 shadow-md"
@@ -490,6 +564,7 @@ export default function CoursesPage() {
                     currentFilter={filterCategory}
                     setFilter={setFilterCategory}
                     icon={cat.icon}
+                    onMouseEnter={() => prefetchCourses(cat.value)}
                   />
                 ))}
               </div>

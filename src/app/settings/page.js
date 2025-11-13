@@ -7,13 +7,9 @@ import Sidebar from "@/components/Sidebar.jsx";
 import Toast from "@/components/Toast.jsx";
 import SettingsSkeleton from "@/components/SettingsSkeleton.jsx";
 import { FaUser, FaLock, FaSave, FaCamera } from "react-icons/fa";
-
-// Dummy user data
-const initialUserData = {
-  name: 'Ruben Amorim',
-  email: 'ruben.amorim@example.com',
-  photo: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=1780&auto=format&fit=crop',
-};
+import { getMe, updateMyProfile } from "@/lib/apiService";
+import { useAuth } from "@/context/AuthContext";
+import { ensureAbsoluteUrl } from "@/lib/urlHelpers";
 
 const TabButton = ({ label, activeTab, setActiveTab }) => (
   <button
@@ -28,24 +24,44 @@ const TabButton = ({ label, activeTab, setActiveTab }) => (
 );
 
 export default function SettingsPage() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [user, setUser] = useState(initialUserData);
+  const { isLoggedIn, isLoading: isAuthLoading } = useAuth();
+  const [user, setUser] = useState(null);
+  const [originalUser, setOriginalUser] = useState(null); // To track initial fetched data
+  const [pageLoading, setPageLoading] = useState(true); // Renamed to avoid conflict
+  const [selectedPhoto, setSelectedPhoto] = useState(null); // New state for selected photo
   const [passwords, setPasswords] = useState({ current: '', new: '', confirm: '' });
   const [errors, setErrors] = useState({});
   const [activeTab, setActiveTab] = useState('Profil');
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
-  // Simulate data fetching
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1500);
-    return () => clearTimeout(timer);
-  }, []);
+    const fetchUserData = async () => {
+      if (!isAuthLoading && !isLoggedIn) {
+        window.location.href = "/login";
+        return;
+      }
+      if (isLoggedIn) {
+        try {
+          setPageLoading(true);
+          const userData = await getMe();
+          setUser(userData);
+          setOriginalUser(userData); // Store original data
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+          setUser(null);
+        } finally {
+          setPageLoading(false);
+        }
+      }
+    };
 
-  const isProfileChanged = useMemo(() =>
-    user.name !== initialUserData.name || user.email !== initialUserData.email,
-  [user]);
+    fetchUserData();
+  }, [isLoggedIn, isAuthLoading]);
+
+  const isProfileChanged = useMemo(() => {
+    if (!user || !originalUser) return false;
+    return user.name !== originalUser.name || user.email !== originalUser.email || selectedPhoto !== null;
+  }, [user, originalUser, selectedPhoto]);
 
   const isPasswordFormValid = useMemo(() =>
     passwords.current && passwords.new && passwords.new === passwords.confirm && !errors.confirm,
@@ -71,27 +87,70 @@ export default function SettingsPage() {
     }
   };
 
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedPhoto(e.target.files[0]);
+    } else {
+      setSelectedPhoto(null);
+    }
+  };
+
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
   };
 
-  const handleSubmit = (e, section) => {
+  const handleSubmit = async (e, section) => {
     e.preventDefault();
     if (section === 'Profil' && !isProfileChanged) return;
     if (section === 'Keamanan' && !isPasswordFormValid) return;
     
-    // Simulate API call
-    console.log(`Menyimpan perubahan untuk: ${section}`, section === 'Profil' ? user : passwords);
-    showToast(`Pengaturan ${section} berhasil diperbarui!`);
-    
-    if (section === 'Keamanan') {
-      setPasswords({ current: '', new: '', confirm: '' });
+    try {
+      if (section === 'Profil') {
+        const profileData = {
+          name: user.name,
+          email: user.email,
+        };
+        if (selectedPhoto) {
+          profileData.photo = selectedPhoto;
+        }
+        const updatedData = await updateMyProfile(profileData);
+        setUser(updatedData.user); // Assuming API returns updated user object
+        setOriginalUser(updatedData.user);
+        setSelectedPhoto(null); // Clear selected photo after successful upload
+        showToast('Profil berhasil diperbarui!');
+      } else if (section === 'Keamanan') {
+        await updateMyProfile({ 
+          password: passwords.new, 
+          password_confirmation: passwords.confirm 
+        });
+        showToast('Password berhasil diperbarui!');
+        setPasswords({ current: '', new: '', confirm: '' });
+      }
+    } catch (error) {
+      console.error(`Error updating ${section}:`, error);
+      let errorMessage = `Gagal memperbarui ${section}.`;
+      if (error.response && error.response.data) {
+        console.log("API Error Response:", error.response); // Log the full error response
+        if (error.response.data.errors && typeof error.response.data.errors === 'object') {
+          const validationErrors = Object.values(error.response.data.errors)
+            .map(fieldErrors => Array.isArray(fieldErrors) ? fieldErrors.join(' ') : String(fieldErrors)) // Ensure fieldErrors is array or convert to string
+            .filter(Boolean) // Remove empty strings
+            .join('; '); // Join messages from different fields
+          errorMessage = validationErrors || error.response.data.message || errorMessage;
+        } else if (error.response.data.message) {
+          // Handle general error message
+          errorMessage = error.response.data.message;
+        }
+      }
+      showToast(errorMessage, 'error');
     }
   };
 
-  if (isLoading) {
+  if (pageLoading || isAuthLoading || !user) {
     return <SettingsSkeleton />;
   }
+
+  const userPhoto = selectedPhoto ? URL.createObjectURL(selectedPhoto) : (user?.photo ? ensureAbsoluteUrl(user.photo) : "https://via.placeholder.com/80");
 
   return (
     <>
@@ -99,7 +158,7 @@ export default function SettingsPage() {
       <div className="relative min-h-screen font-sans bg-gray-50 pt-24 px-2 sm:px-6 md:px-8 lg:px-16">
         <main className="container mx-auto py-8 pb-24 md:pb-8 relative">
           <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
-            <aside className="w-full lg:w-72">
+            <aside className="w-full lg:w-80">
               <div className="sticky top-48">
                 <Sidebar />
               </div>
@@ -127,11 +186,11 @@ export default function SettingsPage() {
                         <SettingsCard title="Foto Profil" icon={<FaCamera />}>
                           <div className="flex flex-col sm:flex-row items-center gap-6">
                             <div className="relative w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden shadow-inner flex-shrink-0">
-                              <Image src={user.photo} alt="Foto Profil" fill className="object-cover" />
+                              <Image src={userPhoto} alt={user.name || "Foto Profil"} fill className="object-cover object-center" />
                             </div>
                             <div className="text-center sm:text-left">
                               <p className="text-gray-600 mb-3">Gunakan gambar beresolusi tinggi dengan format JPG, atau PNG.</p>
-                              <input type="file" id="file-upload" className="hidden" />
+                              <input type="file" id="file-upload" className="hidden" onChange={handleFileChange} accept="image/png, image/jpeg" />
                               <label htmlFor="file-upload" className="cursor-pointer px-4 py-2 bg-gray-100 text-gray-700 font-semibold rounded-lg border border-gray-300 hover:bg-gray-200 transition-colors">
                                 Unggah Foto Baru
                               </label>

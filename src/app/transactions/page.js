@@ -5,79 +5,71 @@ import Image from "next/image";
 import AnimatedContent from "@/components/animatedcontent.jsx";
 import Sidebar from "@/components/Sidebar.jsx";
 import TransactionsSkeleton from "@/components/TransactionsSkeleton.jsx";
-import { FaSearch, FaFileInvoiceDollar } from "react-icons/fa";
+import { FaSearch, FaFileInvoiceDollar, FaEye, FaDownload } from "react-icons/fa";
+import { getMyTransactions } from "@/lib/apiService";
+import { useAuth } from "@/context/AuthContext";
+import { ensureAbsoluteUrl } from "@/lib/urlHelpers";
+import { useRouter } from 'next/navigation';
 
-// Dummy data with added thumbnail and transaction_date
-const transactions = [
-  {
-    id: 1,
-    booking_code: 'INV-20251015-001',
-    course_name: 'Full-Stack Web Development',
-    thumbnail: "/assets/images/web.png",
-    grand_total_amount: 750000,
-    is_paid: true,
-    payment_type: 'Bank Transfer',
-    proof: '/path/to/proof1.jpg',
-    transaction_date: '2025-10-15T10:30:00Z',
-  },
-  {
-    id: 2,
-    booking_code: 'INV-20251014-015',
-    course_name: 'Data Science with Python',
-    thumbnail: "/assets/images/data-sience.png",
-    grand_total_amount: 950000,
-    is_paid: true,
-    payment_type: 'Credit Card',
-    proof: '/path/to/proof2.jpg',
-    transaction_date: '2025-10-14T14:00:00Z',
-  },
-  {
-    id: 3,
-    booking_code: 'INV-20251013-007',
-    course_name: 'Digital Marketing Fundamentals',
-    thumbnail: "/assets/images/digital-marketing.png",
-    grand_total_amount: 450000,
-    is_paid: false,
-    payment_type: 'Virtual Account',
-    proof: null,
-    transaction_date: '2025-10-13T09:00:00Z',
-  },
-  {
-    id: 4,
-    booking_code: 'INV-20251012-021',
-    course_name: 'UI/UX Design for Beginners',
-    thumbnail: "/assets/images/ui-ux.png",
-    grand_total_amount: 600000,
-    is_paid: true,
-    payment_type: 'E-Wallet',
-    proof: '/path/to/proof4.jpg',
-    transaction_date: '2025-10-12T18:45:00Z',
-  },
-];
 
 export default function TransactionsPage() {
+  const { isLoggedIn, isLoading: isAuthLoading } = useAuth();
+  const [transactions, setTransactions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1500); // Simulate 1.5 seconds loading time
-    return () => clearTimeout(timer);
-  }, []);
+    const fetchTransactionsData = async () => {
+      if (!isAuthLoading && !isLoggedIn) {
+        window.location.href = "/login";
+        return;
+      }
+      if (isLoggedIn) {
+        try {
+          setIsLoading(true);
+          const data = await getMyTransactions();
+          setTransactions(data);
+        } catch (error) {
+          console.error("Error fetching transactions:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchTransactionsData();
+  }, [isLoggedIn, isAuthLoading]);
 
   const filteredTransactions = transactions.filter(
     (trx) =>
-      trx.course_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      trx.booking_code.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+      trx.course?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      trx.booking_trx_id.toLowerCase().includes(searchTerm.toLowerCase())
+  ).map(trx => ({
+    id: trx.id,
+    booking_code: trx.booking_trx_id,
+    course_name: trx.course?.name || 'N/A',
+    thumbnail: ensureAbsoluteUrl(trx.course?.thumbnail) || "/assets/images/home.png",
+    grand_total_amount: trx.grand_total_amount,
+    is_paid: trx.is_paid,
+    payment_type: trx.payment_type,
+    proof: trx.proof,
+    transaction_date: trx.created_at,
+    sub_total_amount: trx.sub_total_amount,
+    total_tax_amount: trx.total_tax_amount,
+    pricing_name: trx.pricing?.name || 'N/A',
+  }));
 
   const formatDate = (dateString) => {
     const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false };
     return new Date(dateString).toLocaleString('id-ID', options).replace(/\./g, ':');
   };
 
-  if (isLoading) {
+  const handleViewProof = (transaction) => {
+    router.push(`/payment-success/${transaction.booking_code}`);
+  };
+
+  if (isLoading || isAuthLoading) {
     return <TransactionsSkeleton />;
   }
 
@@ -103,15 +95,17 @@ export default function TransactionsPage() {
 
             <AnimatedContent distance={50} delay={0.2}>
               <div className="mb-8 p-4 bg-white/60 backdrop-blur-lg border border-white/30 rounded-2xl shadow-md">
-                <div className="relative flex-grow">
-                  <input
-                    type="text"
-                    placeholder="Cari berdasarkan nama kursus atau kode booking..."
-                    className="w-full pl-10 pr-4 py-2.5 text-base border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
-                    <FaSearch className="text-gray-400" />
+                <div className="flex flex-col sm:flex-row gap-4 items-center">
+                  <div className="relative w-full sm:max-w-md">
+                    <input
+                      type="text"
+                      placeholder="Cari berdasarkan nama kursus atau kode booking..."
+                      className="w-full pl-10 pr-4 py-2.5 text-base border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
+                      <FaSearch className="text-gray-400" />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -119,23 +113,29 @@ export default function TransactionsPage() {
 
             <AnimatedContent distance={50} delay={0.4}>
               <div className="bg-white shadow-lg rounded-2xl overflow-x-auto border border-gray-200/80">
-                <table className="min-w-full divide-y divide-gray-200">
+                <table className="w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                      <th scope="col" className="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
                         Detail Kursus
                       </th>
-                      <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                      <th scope="col" className="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
                         Tanggal
                       </th>
-                      <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                      <th scope="col" className="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
                         Total Bayar
                       </th>
-                      <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                      <th scope="col" className="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
                         Status
                       </th>
-                      <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                      <th scope="col" className="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
                         Kode Booking
+                      </th>
+                      <th scope="col" className="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                        Tipe Pembayaran
+                      </th>
+                      <th scope="col" className="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                        Aksi
                       </th>
                     </tr>
                   </thead>
@@ -143,14 +143,14 @@ export default function TransactionsPage() {
                     {filteredTransactions.length > 0 ? (
                       filteredTransactions.map((trx) => (
                         <tr key={trx.id} className="hover:bg-gray-50 transition-colors duration-200">
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-3 py-2">
                             <div className="flex items-center">
-                              <div className="flex-shrink-0 h-12 w-20 mr-4">
+                              <div className="flex-shrink-0 h-10 w-16 mr-2">
                                 <Image
                                   src={trx.thumbnail}
                                   alt={trx.course_name}
-                                  width={80}
-                                  height={48}
+                                  width={64}
+                                  height={40}
                                   className="rounded-md object-contain h-full w-full"
                                 />
                               </div>
@@ -159,13 +159,13 @@ export default function TransactionsPage() {
                               </div>
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                          <td className="px-3 py-2 text-sm text-gray-600">
                             {formatDate(trx.transaction_date)}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 font-semibold">
+                          <td className="px-3 py-2 text-sm text-gray-800 font-semibold">
                             {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(trx.grand_total_amount)}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <td className="px-3 py-2 text-sm">
                             {trx.is_paid ? (
                               <span className="px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                                 Lunas
@@ -176,14 +176,38 @@ export default function TransactionsPage() {
                               </span>
                             )}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">
+                          <td className="px-3 py-2 text-sm font-mono text-gray-700">
                             {trx.booking_code}
+                          </td>
+                          <td className="px-3 py-2 text-sm text-gray-600">
+                            {trx.payment_type}
+                          </td>
+                          <td className="px-3 py-2 text-sm font-medium">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-1 sm:space-y-0 sm:space-x-2">
+                              <button
+                                onClick={() => handleViewProof(trx)}
+                                className="w-full sm:w-auto inline-flex items-center px-2 py-1 border border-transparent text-[0.65rem] leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+                              >
+                                <FaEye className="mr-0.5" /> Lihat
+                              </button>
+                              {trx.proof && (
+                                <a
+                                  href={ensureAbsoluteUrl(trx.proof)}
+                                  download
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="w-full sm:w-auto inline-flex items-center px-2 py-1 border border-gray-300 text-[0.65rem] leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
+                                >
+                                  <FaDownload className="mr-0.5" /> Unduh
+                                </a>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="5" className="text-center py-16">
+                        <td colSpan="7" className="text-center py-16">
                           <FaFileInvoiceDollar className="mx-auto text-4xl text-gray-300 mb-4" />
                           <p className="text-gray-500 text-lg">Tidak ada transaksi yang cocok.</p>
                         </td>

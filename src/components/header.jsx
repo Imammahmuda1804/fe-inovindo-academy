@@ -99,7 +99,9 @@ export default function Header() {
       return (
         <div ref={profileDropdownRef} className="relative">
           <button onClick={() => setProfileDropdownOpen(!isProfileDropdownOpen)} className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors">
-            <Image src={ensureAbsoluteUrl(user.photo) || "/assets/images/logo.png"} alt={user.name} width={40} height={40} className="rounded-full border-2 border-gray-300 object-cover" />
+            <div className="w-10 h-10 rounded-full border-2 border-gray-300 overflow-hidden relative">
+              <Image src={ensureAbsoluteUrl(user.photo) || "/assets/images/logo.png"} alt={user.name} fill className="object-cover object-center" />
+            </div>
             <span className="hidden sm:inline font-semibold">Halo, {user.name.split(' ')[0]}</span>
           </button>
           {isProfileDropdownOpen && (

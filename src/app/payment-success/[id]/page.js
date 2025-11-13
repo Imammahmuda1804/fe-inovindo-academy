@@ -1,14 +1,15 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { 
-    FaCheck, FaHome, FaGraduationCap, FaHashtag, FaCalendarAlt, 
-    FaCreditCard, FaPrint, FaChevronDown 
+import {
+    FaCheck, FaHome, FaGraduationCap, FaHashtag, FaCalendarAlt,
+    FaCreditCard, FaPrint, FaChevronDown
 } from 'react-icons/fa';
 import Link from 'next/link';
 import './style.css';
+import { getTransactionDetail } from '@/lib/apiService';
 
 // Fungsi utilitas
 const formatRupiah = (amount) =>
@@ -26,85 +27,51 @@ const formatDate = (dateStr) =>
     minute: "2-digit",
   });
 
-// Data dummy untuk development
-const dummyTransaction = {
-  transaction_id: "TRX-DUMMY-12345",
-  payment_date: new Date().toISOString(),
-  payment_method: "Midtrans (Dummy)",
-  subtotal: 599000,
-  tax: 65890,
-  total: 664890,
-  course: { name: "Belajar Desain UI/UX dari Dasar hingga Mahir" },
-  plan: { name: "Premium Plan" },
-};
-
-export default function PaymentSuccessPage() {
+export default function PaymentSuccessPage({ params }) {
+  const { id: transactionId } = React.use(params);
   const [transaction, setTransaction] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const data = sessionStorage.getItem("transactionData");
-    if (data) {
-      setTransaction(JSON.parse(data));
-    } else {
-      console.warn(
-        "Data transaksi tidak ditemukan. Menampilkan data dummy untuk development."
-      );
-      setTransaction(dummyTransaction);
-    }
-  }, []);
-
-  const handlePrint = async () => {
-    // TODO: Implementasikan pembuatan PDF melalui backend di sini.
-    // Komentar di bawah ini adalah contoh kerangka untuk implementasi di masa depan.
-
-    /*
-    console.log("Memulai proses pembuatan PDF untuk transaksi:", transaction.transaction_id);
-    try {
-      // 1. Panggil API backend Anda untuk menghasilkan PDF.
-      // Ganti URL dengan endpoint API Anda yang sebenarnya.
-      const response = await fetch(`https://your-laravel-api.com/api/transactions/generate-pdf`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          // 'Authorization': 'Bearer YOUR_AUTH_TOKEN', // Tambahkan jika perlu otentikasi
-        },
-        body: JSON.stringify({
-          transaction_id: transaction.transaction_id,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Gagal saat menghubungi server untuk membuat PDF.');
+    const fetchTransaction = async () => {
+      if (!transactionId) {
+        setIsLoading(false);
+        setError("ID Transaksi tidak ditemukan.");
+        return;
       }
 
-      // 2. Terima file PDF dari backend dan buka di tab baru atau unduh.
-      const blob = await response.blob();
-      const fileURL = URL.createObjectURL(blob);
-      
-      // Buka di tab baru
-      window.open(fileURL, '_blank');
+      setIsLoading(true);
+      setError(null);
+      try {
+        const data = await getTransactionDetail(transactionId);
+        setTransaction({
+          transaction_id: data.booking_trx_id,
+          payment_date: data.created_at,
+          payment_method: data.payment_type,
+          subtotal: data.sub_total_amount,
+          tax: data.total_tax_amount,
+          total: data.grand_total_amount,
+          course: { name: data.course.name },
+          plan: { name: data.pricing.name },
+        });
+      } catch (err) {
+        console.error("Error fetching transaction details:", err);
+        setError("Gagal memuat detail transaksi. Silakan coba lagi.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-      // Atau, untuk mengunduh file secara otomatis:
-      // const link = document.createElement('a');
-      // link.href = fileURL;
-      // link.setAttribute('download', `bukti-transaksi-${transaction.transaction_id}.pdf`);
-      // document.body.appendChild(link);
-      // link.click();
-      // document.body.removeChild(link);
+    fetchTransaction();
+  }, [transactionId]);
 
-    } catch (error) {
-      console.error("Gagal membuat PDF:", error);
-      alert("Gagal membuat bukti transaksi. Silakan coba lagi nanti.");
-    }
-    */
-
-    // Untuk saat ini, fungsionalitas cetak halaman tetap dipertahankan sebagai placeholder.
+  const handlePrint = async () => {
     console.log("Fungsionalitas cetak saat ini masih menggunakan window.print(). Ganti logika di atas saat backend siap.");
     window.print();
   };
 
-
-  if (!transaction) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen gradient-bg">
         Memuat data transaksi...
@@ -112,9 +79,25 @@ export default function PaymentSuccessPage() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen gradient-bg text-red-600 font-bold">
+        {error}
+      </div>
+    );
+  }
+
+  if (!transaction) {
+    return (
+      <div className="flex items-center justify-center h-screen gradient-bg text-gray-600">
+        Transaksi tidak ditemukan.
+      </div>
+    );
+  }
+
   return (
     <>
-      <div className="flex items-center justify-center min-h-screen p-4 font-sans text-gray-800 gradient-bg printable-areav">
+      <div className="flex items-center justify-center min-h-screen p-4 pt-20 font-sans text-gray-800 gradient-bg printable-areav">
         <motion.main
           className="w-full max-w-2xl mx-auto"
           initial={{ opacity: 0, y: 20 }}

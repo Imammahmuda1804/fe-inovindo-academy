@@ -14,158 +14,113 @@ import {
   FaList,
 } from "react-icons/fa";
 import Sidebar from "@/components/Sidebar.jsx";
-import MyCoursesSkeleton from "@/components/MyCoursesSkeleton.jsx"; // Import skeleton
+import MyCoursesSkeleton from "@/components/MyCoursesSkeleton.jsx";
+import {
+  getMyCourses,
+  getCategories as fetchCategories,
+} from "@/lib/apiService";
+import { useAuth } from "@/context/AuthContext";
+import { ensureAbsoluteUrl } from "@/lib/urlHelpers";
 
-const courses = [
-  {
-    imgSrc: "/assets/images/home.png",
-    title: "Membuat Aplikasi Kloning Uber",
-    category: "Pengembangan",
-    progress: 75,
-    instructor: {
-      name: "Ruben Amorim",
-      imgSrc:
-        "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=1780&auto=format&fit=crop",
-    },
-  },
-  {
-    imgSrc: "/assets/images/home.jpg",
-    title: "Fundamental JavaScript Modern",
-    category: "Pengembangan",
-    progress: 50,
-    instructor: {
-      name: "Andre Onana",
-      imgSrc:
-        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=1887&auto=format&fit=crop",
-    },
-  },
-  {
-    imgSrc: "/assets/images/hero.png",
-    title: "Membangun Aplikasi dengan React",
-    category: "Pengembangan",
-    progress: 25,
-    instructor: {
-      name: "Bruno Fernandes",
-      imgSrc:
-        "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=1961&auto=format&fit=crop",
-    },
-  },
-  {
-    imgSrc: "/assets/images/ui-ux.png",
-    title: "Dasar-Dasar Desain UI/UX",
-    category: "Desain",
-    progress: 100,
-    instructor: {
-      name: "Sarah Johnson",
-      imgSrc:
-        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1887&auto=format&fit=crop",
-    },
-  },
-  {
-    imgSrc: "/assets/images/digital-marketing.png",
-    title: "Digital Marketing 101",
-    category: "Pemasaran",
-    progress: 0,
-    instructor: {
-      name: "David Lee",
-      imgSrc:
-        "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?q=80&w=1770&auto=format&fit=crop",
-    },
-  },
-  {
-    imgSrc: "/assets/images/data-sience.png",
-    title: "Pengantar Ilmu Data",
-    category: "Data",
-    progress: 10,
-    instructor: {
-      name: "Emily Clark",
-      imgSrc:
-        "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=1888&auto=format&fit=crop",
-    },
-  },
-];
+const courseThumbnail = (course) =>
+  ensureAbsoluteUrl(course?.thumbnail) || "/assets/images/home.png";
 
 const CourseCard = ({ course }) => {
+  console.log("Course:", course?.name, "Progress:", course?.progress_percentage);
+
   const getProgressColor = (progress) => {
     if (progress === 100) return "bg-green-500";
     if (progress > 0) return "bg-blue-500";
     return "bg-gray-300";
   };
 
+  const mentor = course?.mentors?.length > 0 ? course.mentors[0].user : null;
+  const mentorName = mentor ? mentor.name : "N/A";
+  const mentorPhoto = ensureAbsoluteUrl(mentor?.photo) || "https://via.placeholder.com/32";
+  const thumbnail = courseThumbnail(course);
+
   return (
-    <Link href="/detail-course" passHref>
-      <motion.div
-        className="flex flex-col h-full overflow-hidden text-left duration-300 border cursor-pointer bg-white shadow-lg border-gray-200/80 rounded-2xl group"
-        whileHover={{
-          y: -6,
-          boxShadow: "0px 15px 25px rgba(0, 0, 0, 0.1)",
-        }}
-      >
-        <div className="relative overflow-hidden w-full aspect-[16/9]">
+    <motion.div
+      className="flex flex-col h-full overflow-hidden text-left duration-300 border bg-white shadow-lg border-gray-200/80 rounded-2xl group"
+      whileHover={{
+        y: -6,
+        boxShadow: "0px 15px 25px rgba(0, 0, 0, 0.1)",
+      }}
+    >
+      <Link href={`/detail-course/${course.slug}`} passHref>
+        <div className="relative overflow-hidden w-full aspect-[16/9] cursor-pointer">
           <Image
-            src={course.imgSrc}
-            alt={course.title}
+            src={thumbnail}
+            alt={course.name}
             fill
             className="object-cover transition-transform duration-500 group-hover:scale-110"
           />
         </div>
-        <div className="p-4 flex flex-col flex-grow">
-          <h2 className="text-lg font-bold text-gray-800">
-            {course.title}
-          </h2>
+      </Link>
 
-          <div className="flex items-center mt-3">
-            <div className="w-8 h-8 rounded-full overflow-hidden mr-3 flex-shrink-0">
-              <Image
-                src={course.instructor.imgSrc}
-                alt={course.instructor.name}
-                width={32}
-                height={32}
-                className="object-cover w-full h-full"
-              />
-            </div>
-            <span className="text-gray-600 text-sm font-medium">
-              {course.instructor.name}
-            </span>
+      <div className="p-4 flex flex-col flex-grow">
+        <Link href={`/detail-course/${course.slug}`} passHref>
+          <span className="text-xs font-semibold text-blue-600 bg-blue-100 px-2 py-1 rounded-full self-start mb-2 cursor-pointer">
+            {course.category?.name || "Uncategorized"}
+          </span>
+        </Link>
+
+        <Link href={`/detail-course/${course.slug}`} passHref>
+          <h2 className="text-lg font-bold text-gray-800 cursor-pointer">{course.name}</h2>
+        </Link>
+
+        <div className="flex items-center mt-3">
+          <div className="w-8 h-8 rounded-full overflow-hidden mr-3 flex-shrink-0">
+            <Image
+              src={mentorPhoto}
+              alt={mentorName}
+              width={32}
+              height={32}
+              className="object-cover w-full h-full"
+            />
           </div>
 
-          <div className="w-full mt-auto">
-            <div className="mb-3">
-              <div className="flex justify-between items-center mb-1">
-                <p className="text-xs font-semibold text-gray-500">Progres</p>
-                <p
-                  className={`text-xs font-bold ${
-                    getProgressColor(course.progress).replace("bg-", "text-")
-                  }`}
-                >
-                  {course.progress}%
-                </p>
-              </div>
-              <div className="w-full h-2 rounded-full bg-gray-200 overflow-hidden">
-                <motion.div
-                  className={`h-2 rounded-full ${getProgressColor(
-                    course.progress
-                  )}`}
-                  initial={{ width: 0 }}
-                  whileInView={{ width: `${course.progress}%` }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 1.2, ease: "easeOut" }}
-                ></motion.div>
-              </div>
-            </div>
-          </div>
+          <span className="text-gray-600 text-sm font-medium">{mentorName}</span>
         </div>
-      </motion.div>
-    </Link>
+
+        <div className="w-full mt-auto">
+          <div className="mb-3">
+            <div className="flex justify-between items-center mb-1">
+              <p className="text-xs font-semibold text-gray-500">Progres</p>
+              <p className={`text-xs font-bold ${getProgressColor(course.progress_percentage).replace("bg-", "text-")}`}>
+                {course.progress_percentage}%
+              </p>
+            </div>
+
+            <div className="w-full h-2 rounded-full bg-gray-200 overflow-hidden">
+              <motion.div
+                className={`h-2 rounded-full ${getProgressColor(course.progress_percentage)}`}
+                initial={{ width: 0 }}
+                whileInView={{ width: `${course.progress_percentage}%` }}
+                viewport={{ once: true }}
+                transition={{ duration: 1.2, ease: "easeOut" }}
+              ></motion.div>
+            </div>
+          </div>
+
+          {course.progress_percentage < 100 && (
+            <Link href={`/materi/${course.slug}`} passHref>
+              <motion.button
+                className="w-full mt-4 inline-flex items-center justify-center px-4 py-2.5 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                Lanjutkan Belajar
+              </motion.button>
+            </Link>
+          )}
+        </div>
+      </div>
+    </motion.div>
   );
 };
 
-const Pagination = ({
-  coursesPerPage,
-  totalCourses,
-  paginate,
-  currentPage,
-}) => {
+const Pagination = ({ coursesPerPage, totalCourses, paginate, currentPage }) => {
   const pageNumbers = [];
   for (let i = 1; i <= Math.ceil(totalCourses / coursesPerPage); i++) {
     pageNumbers.push(i);
@@ -195,6 +150,9 @@ const Pagination = ({
 };
 
 export default function MyCoursesPage() {
+  const { isLoggedIn, isLoading: isAuthLoading } = useAuth();
+  const [courses, setCourses] = useState([]);
+  const [filteredCourses, setFilteredCourses] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("All");
@@ -203,49 +161,77 @@ export default function MyCoursesPage() {
   const [categories, setCategories] = useState([]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      // Simulate fetching categories
-      try {
-        const categoryIcons = {
-          Pengembangan: FaCode,
-          Desain: FaPalette,
-          Pemasaran: FaBullhorn,
-          Data: FaChartBar,
-        };
-        // In a real app, you would fetch from an API
-        // const response = await fetch('http://your-api.com/api/categories');
-        // const data = await response.json();
-        const hardcodedCategories = [
-          { value: "All", label: "Semua", icon: FaList },
-          { value: "Pengembangan", label: "Pengembangan", icon: FaCode },
-          { value: "Desain", label: "Desain", icon: FaPalette },
-          { value: "Pemasaran", label: "Pemasaran", icon: FaBullhorn },
-          { value: "Data", label: "Data", icon: FaChartBar },
-        ];
-        setCategories(hardcodedCategories);
-      } catch (error) {
-        console.error("Gagal mengambil data kategori:", error);
-        // Fallback just in case
+    const fetchCourseData = async () => {
+      if (!isAuthLoading && !isLoggedIn) {
+        window.location.href = "/login";
+        return;
       }
+      if (isLoggedIn) {
+        try {
+          setIsLoading(true);
+          const myCourses = await getMyCourses();
+          const coursesWithNumericProgress = myCourses.map((course) => ({
+            ...course,
+            progress_percentage: Number(course.progress_percentage) || 0,
+          }));
+          setCourses(coursesWithNumericProgress);
+          setFilteredCourses(coursesWithNumericProgress);
 
-      // Simulate overall data loading time
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 1500); // Simulate 1.5 seconds loading time
+          const categoryIcons = {
+            "Web Development": FaCode,
+            "UI/UX Design": FaPalette,
+            "Digital Marketing": FaBullhorn,
+            "Data Science": FaChartBar,
+          };
+
+          // Extract unique categories from the user's courses
+          const userCategories = [
+            ...new Set(myCourses.map((course) => course.category.name)),
+          ];
+
+          const dynamicCategories = userCategories.map((catName) => ({
+            value: catName,
+            label: catName,
+            icon: categoryIcons[catName] || FaCode,
+          }));
+
+          setCategories([
+            { value: "All", label: "Semua", icon: FaList },
+            ...dynamicCategories,
+          ]);
+        } catch (error) {
+          console.error("Gagal mengambil data kursus atau kategori:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
     };
 
-    fetchData();
-  }, []);
+    fetchCourseData();
+  }, [isLoggedIn, isAuthLoading]);
+
+  useEffect(() => {
+    let filtered = courses;
+
+    if (searchTerm) {
+      filtered = filtered.filter((course) =>
+        course.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (filterCategory !== "All") {
+      filtered = filtered.filter(
+        (course) => course.category.name === filterCategory
+      );
+    }
+
+    setFilteredCourses(filtered);
+    setCurrentPage(1); // Reset to first page on filter change
+  }, [searchTerm, filterCategory, courses]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, []);
-
-  const filteredCourses = courses.filter(
-    (course) =>
-      course.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      (filterCategory === "All" || course.category === filterCategory)
-  );
+  }, [currentPage]);
 
   const indexOfLastCourse = currentPage * coursesPerPage;
   const indexOfFirstCourse = indexOfLastCourse - coursesPerPage;
@@ -263,7 +249,7 @@ export default function MyCoursesPage() {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || isAuthLoading) {
     return <MyCoursesSkeleton />;
   }
 

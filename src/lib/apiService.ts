@@ -122,6 +122,16 @@ export const getCourseBySlug = async (slug) => {
   }
 };
 
+export const getMateriBySlug = async (slug) => {
+  try {
+    const response = await api.get(`/materi/${slug}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching materi ${slug}:`, error);
+    return null;
+  }
+};
+
 export const getPricingByCourseId = async (courseId) => {
   try {
     const response = await api.get(`/courses/${courseId}/pricings`);
@@ -148,5 +158,87 @@ export const getCoursesByCategory = async (categorySlug) => {
     return [];
   }
 };
+
+export const getMyCourses = async () => {
+  try {
+    const response = await api.get("/my-courses");
+    if (Array.isArray(response.data.data)) {
+      return response.data.data;
+    }
+    console.warn("Unexpected response structure for my courses:", response.data);
+    return [];
+  } catch (error) {
+    console.error("Error fetching my courses:", error);
+    return [];
+  }
+};
+
+export const getMyTransactions = async () => {
+  try {
+    const response = await api.get("/my-transactions");
+    if (Array.isArray(response.data.data)) {
+      return response.data.data;
+    }
+    console.warn("Unexpected response structure for my transactions:", response.data);
+    return [];
+  } catch (error) {
+    console.error("Error fetching my transactions:", error);
+    return [];
+  }
+};
+
+export const getMyCertificates = async () => {
+  try {
+    const response = await api.get("/my-certificates");
+    if (Array.isArray(response.data.data)) {
+      return response.data.data;
+    }
+    console.warn("Unexpected response structure for my certificates:", response.data);
+    return [];
+  } catch (error) {
+    console.error("Error fetching my certificates:", error);
+    return [];
+  }
+};
+
+export const updateMyProfile = async (userData) => {
+  try {
+    let payload = userData;
+    let headers = {};
+
+    if (userData.photo instanceof File) {
+      const formData = new FormData();
+      for (const key in userData) {
+        if (Object.prototype.hasOwnProperty.call(userData, key)) {
+          formData.append(key, userData[key]);
+        }
+      }
+      payload = formData;
+      headers['Content-Type'] = 'multipart/form-data';
+    }
+
+    const response = await api.post("/me", payload, { headers });
+    return response.data;
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    throw error;
+  }
+};
+
+export const getTransactionDetail = async (id: string | number) => {
+  try {
+    const response = await api.get(`/transactions/${id}`);
+    return response.data.data;
+  } catch (error) {
+    console.error(`Error fetching transaction ${id}:`, error);
+    throw error; // Re-throw to be handled by the component
+  }
+};
+
+export const deleteContent = (contentId: number) => api.delete(`/contents/${contentId}`);
+
+// --- Quiz Attempts Endpoints ---
+export const createQuizAttempt = (payload: any) => api.post('/quiz-attempts', payload);
+export const getQuizAttemptsByContent = (sectionId: number, contentId: number) => api.get(`/my-quiz-attempts/section/${sectionId}/content/${contentId}`);
 
 export default api;
