@@ -13,6 +13,7 @@ Dokumentasi lengkap untuk semua endpoint API yang tersedia di proyek LMS.
 5.  [Mentor](#mentor)
 6.  [Harga (Pricing)](#harga-pricing)
 7.  [Transaksi](#transaksi)
+    - [Midtrans Webhook](#midtrans-webhook)
 8.  [Statistik](#statistik)
 9.  [Sertifikat](#sertifikat)
 10. [Percobaan Kuis (Quiz Attempts)](#percobaan-kuis-quiz-attempts)
@@ -203,22 +204,228 @@ Endpoint untuk melihat dan mengelola kelas.
 - **Parameter URL:** `slug` (string, wajib).
 - **Respons Sukses (200):**
   ```json
-  {
-    "status": "success",
-    "message": "Course details retrieved successfully",
-    "data": {
-      "id": 1,
-      "name": "Belajar Laravel dari Dasar",
-      "slug": "belajar-laravel-dari-dasar",
-      "thumbnail": "...",
-      "about": "...",
-      "category": { "id": 1, "name": "Web Development", "slug": "web-development" },
-      "mentors": [ { "user": { "id": 2, "name": "Budi Mentor", "photo": null } } ],
-      "benefits": [ { "id": 1, "course_id": 1, "name": "Sertifikat", "description": "..." } ],
-      "sections": [ { "id": 1, "title": "Pendahuluan", "contents": [ ... ] } ],
-      "pricings": [ { "id": 1, "name": "30 Hari", "price": 100000, "duration_days": 30 } ],
-      "batches": [ { "id": 1, "name": "Batch 1", "start_date": "...", "end_date": "..." } ]
-    }
+  {{
+  "status": "success",
+  "message": "Course details retrieved successfully",
+  "data": {
+    "id": 12,
+    "name": "Flutter untuk pemula",
+    "slug": "flutter-untuk-pemula",
+    "thumbnail": "http://127.0.0.1:8000/storage/thumbnails/01KAV4CDWVGA363Y9MECVY5E5P.png",
+    "about": "Kelas ini dirancang khusus bagi siapa pun yang ingin memulai perjalanan dalam pengembangan aplikasi mobile menggunakan Flutter. Dengan metode pembelajaran yang terstruktur dan mudah diikuti, kamu akan diperkenalkan pada dasar-dasar Flutter, komponen UI, hingga pembuatan aplikasi sederhana. Materi disusun agar pemula tanpa pengalaman sebelumnya tetap dapat memahami konsep secara bertahap.\n\nSepanjang pembelajaran, kamu akan melakukan praktik langsung, mulai dari instalasi Flutter SDK, menjalankan emulator, membuat widget dasar, hingga memahami konsep state management sederhana. Kelas ini menekankan pembelajaran berbasis proyek sehingga kamu benar-benar melihat hasil nyata dari setiap materi yang dipelajari.\n\nDi akhir kelas, kamu akan mampu membangun aplikasi mobile dasar yang siap dijalankan di perangkat Android atau iOS. Dengan bekal pemahaman inti Flutter, kamu siap melangkah ke level menengah seperti integrasi API, state management lanjutan, dan pengembangan aplikasi skala besar.",
+    "is_popular": true,
+    "category_id": 2,
+    "created_at": "2025-11-24T14:30:46.000000Z",
+    "updated_at": "2025-11-24T14:30:46.000000Z",
+    "deleted_at": null,
+    "has_access": false,
+    "thumbnail_url": "http://127.0.0.1:8000/storage/thumbnails/01KAV4CDWVGA363Y9MECVY5E5P.png",
+    "creation_year": 2025,
+    "price": 1000000,
+    "category": {
+      "id": 2,
+      "name": "Mobile Development",
+      "slug": "mobile-development"
+    },
+    "mentors": [
+      {
+        "id": 14,
+        "user_id": 6,
+        "course_id": 12,
+        "job": "Mobile Developer",
+        "about": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus tempus tincidunt augue, vel vestibulum felis tempor ac. Praesent posuere dolor sit amet viverra mattis. In a enim in neque pulvinar gravida eget vitae urna. Morbi eget faucibus nisi, at laoreet neque. Nulla ornare sem vitae arcu tempus semper. Nullam varius, neque eu rutrum vehicula, arcu nunc convallis dolor, non porta urna sapien sit amet felis. Donec pellentesque nunc quis vehicula blandit. Suspendisse potenti. Praesent sem ante, pulvinar et dui quis, sagittis consectetur dui. Fusce eu sem quis augue dictum condimentum vel ut justo. Quisque sit amet laoreet ex. Etiam sapien enim, scelerisque id pellentesque a, placerat eget eros.\n\nMaecenas sit amet ligula tristique, finibus nunc id, pulvinar purus. Duis eleifend fringilla magna, a luctus urna vulputate vitae. Vestibulum consectetur, justo vel gravida accumsan, diam sem rhoncus metus, nec auctor lacus felis eu quam. Pellentesque eu suscipit tellus. Donec finibus vel libero fermentum eleifend. Nunc ut nibh eget nisi vestibulum varius. Proin sem dui, hendrerit gravida risus volutpat, eleifend malesuada nisi. Quisque eu hendrerit diam, eget varius ex. Donec elementum iaculis diam vel congue. Pellentesque aliquet consequat neque, ut rutrum leo faucibus eget. Suspendisse fringilla pharetra pellentesque.",
+        "created_at": "2025-11-24T16:12:32.000000Z",
+        "updated_at": "2025-11-24T16:12:32.000000Z",
+        "deleted_at": null,
+        "user": {
+          "id": 6,
+          "name": "Jerrold Bechtelar",
+          "photo": "user-photos/01K9BVY7B6ZH5B1G80843YTZJD.jpg"
+        }
+      }
+    ],
+    "benefits": [],
+    "sections": [
+      {
+        "id": 18,
+        "name": "1. Introduction to Flutter",
+        "course_id": 12,
+        "position": 1,
+        "created_at": "2025-11-24T14:31:50.000000Z",
+        "updated_at": "2025-11-24T14:31:50.000000Z",
+        "deleted_at": null,
+        "contents": [
+          {
+            "id": 21,
+            "name": "Apa itu Flutter?",
+            "course_section_id": 18,
+            "content": "<p><strong>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam maximus tincidunt egestas. Pellentesque tempor iaculis tellus. Donec eu elit id lectus tempor semper. Sed sapien mauris, fermentum a neque ut, euismod suscipit est.</strong> Donec dolor justo, ultricies ac scelerisque a, luctus ut tellus. Aliquam elementum orci eget dolor vestibulum, quis efficitur lorem condimentum. Maecenas interdum erat tortor, sed pretium mi molestie sed. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vestibulum lorem lacus, ullamcorper vel justo id, vulputate maximus nulla. Aliquam eget felis dignissim, lobortis dui eget, cursus ante.</p><p><em>Phasellus at augue diam.</em> Aliquam erat volutpat. Mauris lacinia eros eu varius vestibulum. Pellentesque nec suscipit arcu. Etiam vel nisi eget odio sagittis porta ac eu quam. In felis dui, consectetur ultricies rhoncus in, rhoncus vel magna. Nunc vitae hendrerit est. Nunc consectetur nibh in mi vehicula tristique. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Cras eleifend diam id orci tempor, quis lacinia odio vestibulum. Pellentesque interdum dui non ante tincidunt, eget gravida metus vehicula. Nullam vel massa ipsum. Phasellus fringilla commodo tincidunt. Praesent non scelerisque nulla. Nulla eu dolor sit amet nulla euismod semper nec non justo.</p><p>Nam sit amet nisl in neque tempor cursus. Quisque fermentum efficitur dolor nec ornare. Fusce convallis, leo at tristique efficitur, purus nulla rutrum ligula, sed congue tellus metus a nisl. Pellentesque mollis lectus eget ante consequat dictum. Sed a ipsum dui. Integer sit amet condimentum sem, ut suscipit ligula. Integer commodo nisl sit amet egestas mollis. Mauris orci orci, facilisis vel vulputate rhoncus, interdum non urna. Quisque risus lorem, condimentum ut leo lacinia, laoreet commodo mauris. Ut non mi tempor, dignissim eros quis, aliquet neque. Proin dictum quam nec metus ultricies imperdiet. Ut tincidunt nisl non convallis gravida. Pellentesque ut ligula rhoncus, tincidunt tortor non, malesuada ex. Donec aliquam mollis lacus. Fusce ex nibh, rutrum nec sollicitudin fermentum, varius et quam.</p><p>Cras vel lacinia nibh. Aliquam a posuere dolor. Cras bibendum ligula turpis, ut consectetur metus porta in. Morbi dapibus hendrerit felis et pulvinar. Donec at lacinia risus. Morbi vel quam laoreet, egestas quam a, aliquet diam. Nulla elementum ligula sed purus maximus tristique. In at euismod dolor. Donec varius odio et ullamcorper convallis. Donec maximus sollicitudin sollicitudin. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Donec fringilla lobortis enim, nec pharetra ipsum pulvinar interdum. Nunc vitae consectetur felis, a euismod nulla. Aliquam accumsan, massa nec pulvinar pretium, augue dolor eleifend ante, sed gravida arcu orci nec nisl. Nullam fermentum id erat a lobortis.</p>",
+            "position": 0,
+            "created_at": "2025-11-24T14:35:53.000000Z",
+            "updated_at": "2025-11-24T14:35:53.000000Z",
+            "deleted_at": null,
+            "is_completed": false,
+            "course_progress": [
+              {
+                "id": 57,
+                "user_id": 61,
+                "course_id": 12,
+                "course_batch_id": null,
+                "course_section_id": 18,
+                "course_content_id": 21,
+                "is_completed": true,
+                "completed_at": "2025-11-24T15:48:25.000000Z",
+                "created_at": "2025-11-24T15:48:25.000000Z",
+                "updated_at": "2025-11-24T15:48:25.000000Z",
+                "deleted_at": null
+              }
+            ]
+          },
+          {
+            "id": 22,
+            "name": "Kelebihan Flutter dibanding framework lain",
+            "course_section_id": 18,
+            "content": "<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam maximus tincidunt egestas. Pellentesque tempor iaculis tellus. Donec eu elit id lectus tempor semper. Sed sapien mauris, fermentum a neque ut, euismod suscipit est. Donec dolor justo, ultricies ac scelerisque a, luctus ut tellus. Aliquam elementum orci eget dolor vestibulum, quis efficitur lorem condimentum. Maecenas interdum erat tortor, sed pretium mi molestie sed. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vestibulum lorem lacus, ullamcorper vel justo id, vulputate maximus nulla. Aliquam eget felis dignissim, lobortis dui eget, cursus ante.</p><p>Phasellus at augue diam. Aliquam erat volutpat. Mauris lacinia eros eu varius vestibulum. Pellentesque nec suscipit arcu. Etiam vel nisi eget odio sagittis porta ac eu quam. In felis dui, consectetur ultricies rhoncus in, rhoncus vel magna. Nunc vitae hendrerit est. Nunc consectetur nibh in mi vehicula tristique. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Cras eleifend diam id orci tempor, quis lacinia odio vestibulum. Pellentesque interdum dui non ante tincidunt, eget gravida metus vehicula. Nullam vel massa ipsum. Phasellus fringilla commodo tincidunt. Praesent non scelerisque nulla. Nulla eu dolor sit amet nulla euismod semper nec non justo.</p><p>Nam sit amet nisl in neque tempor cursus. Quisque fermentum efficitur dolor nec ornare. Fusce convallis, leo at tristique efficitur, purus nulla rutrum ligula, sed congue tellus metus a nisl. Pellentesque mollis lectus eget ante consequat dictum. Sed a ipsum dui. Integer sit amet condimentum sem, ut suscipit ligula. Integer commodo nisl sit amet egestas mollis. Mauris orci orci, facilisis vel vulputate rhoncus, interdum non urna. Quisque risus lorem, condimentum ut leo lacinia, laoreet commodo mauris. Ut non mi tempor, dignissim eros quis, aliquet neque. Proin dictum quam nec metus ultricies imperdiet. Ut tincidunt nisl non convallis gravida. Pellentesque ut ligula rhoncus, tincidunt tortor non, malesuada ex. Donec aliquam mollis lacus. Fusce ex nibh, rutrum nec sollicitudin fermentum, varius et quam.</p><p>Cras vel lacinia nibh. Aliquam a posuere dolor. Cras bibendum ligula turpis, ut consectetur metus porta in. Morbi dapibus hendrerit felis et pulvinar. Donec at lacinia risus. Morbi vel quam laoreet, egestas quam a, aliquet diam. Nulla elementum ligula sed purus maximus tristique. In at euismod dolor. Donec varius odio et ullamcorper convallis. Donec maximus sollicitudin sollicitudin. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Donec fringilla lobortis enim, nec pharetra ipsum pulvinar interdum. Nunc vitae consectetur felis, a euismod nulla. Aliquam accumsan, massa nec pulvinar pretium, augue dolor eleifend ante, sed gravida arcu orci nec nisl. Nullam fermentum id erat a lobortis.</p>",
+            "position": 0,
+            "created_at": "2025-11-24T14:38:31.000000Z",
+            "updated_at": "2025-11-24T14:38:31.000000Z",
+            "deleted_at": null,
+            "is_completed": false,
+            "course_progress": [
+              {
+                "id": 58,
+                "user_id": 61,
+                "course_id": 12,
+                "course_batch_id": null,
+                "course_section_id": 18,
+                "course_content_id": 22,
+                "is_completed": true,
+                "completed_at": "2025-11-24T15:50:35.000000Z",
+                "created_at": "2025-11-24T15:50:35.000000Z",
+                "updated_at": "2025-11-24T15:50:35.000000Z",
+                "deleted_at": null
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 19,
+        "name": "2. Getting Started with Dart Basics",
+        "course_id": 12,
+        "position": 2,
+        "created_at": "2025-11-24T14:32:05.000000Z",
+        "updated_at": "2025-11-24T14:32:05.000000Z",
+        "deleted_at": null,
+        "contents": [
+          {
+            "id": 23,
+            "name": "Variabel dan tipe data",
+            "course_section_id": 19,
+            "content": "<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam maximus tincidunt egestas. Pellentesque tempor iaculis tellus. Donec eu elit id lectus tempor semper. Sed sapien mauris, fermentum a neque ut, euismod suscipit est. Donec dolor justo, ultricies ac scelerisque a, luctus ut tellus. Aliquam elementum orci eget dolor vestibulum, quis efficitur lorem condimentum. Maecenas interdum erat tortor, sed pretium mi molestie sed. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vestibulum lorem lacus, ullamcorper vel justo id, vulputate maximus nulla. Aliquam eget felis dignissim, lobortis dui eget, cursus ante.</p><p>Phasellus at augue diam. Aliquam erat volutpat. Mauris lacinia eros eu varius vestibulum. Pellentesque nec suscipit arcu. Etiam vel nisi eget odio sagittis porta ac eu quam. In felis dui, consectetur ultricies rhoncus in, rhoncus vel magna. Nunc vitae hendrerit est. Nunc consectetur nibh in mi vehicula tristique. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Cras eleifend diam id orci tempor, quis lacinia odio vestibulum. Pellentesque interdum dui non ante tincidunt, eget gravida metus vehicula. Nullam vel massa ipsum. Phasellus fringilla commodo tincidunt. Praesent non scelerisque nulla. Nulla eu dolor sit amet nulla euismod semper nec non justo.</p><p>Nam sit amet nisl in neque tempor cursus. Quisque fermentum efficitur dolor nec ornare. Fusce convallis, leo at tristique efficitur, purus nulla rutrum ligula, sed congue tellus metus a nisl. Pellentesque mollis lectus eget ante consequat dictum. Sed a ipsum dui. Integer sit amet condimentum sem, ut suscipit ligula. Integer commodo nisl sit amet egestas mollis. Mauris orci orci, facilisis vel vulputate rhoncus, interdum non urna. Quisque risus lorem, condimentum ut leo lacinia, laoreet commodo mauris. Ut non mi tempor, dignissim eros quis, aliquet neque. Proin dictum quam nec metus ultricies imperdiet. Ut tincidunt nisl non convallis gravida. Pellentesque ut ligula rhoncus, tincidunt tortor non, malesuada ex. Donec aliquam mollis lacus. Fusce ex nibh, rutrum nec sollicitudin fermentum, varius et quam.</p><p>Cras vel lacinia nibh. Aliquam a posuere dolor. Cras bibendum ligula turpis, ut consectetur metus porta in. Morbi dapibus hendrerit felis et pulvinar. Donec at lacinia risus. Morbi vel quam laoreet, egestas quam a, aliquet diam. Nulla elementum ligula sed purus maximus tristique. In at euismod dolor. Donec varius odio et ullamcorper convallis. Donec maximus sollicitudin sollicitudin. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Donec fringilla lobortis enim, nec pharetra ipsum pulvinar interdum. Nunc vitae consectetur felis, a euismod nulla. Aliquam accumsan, massa nec pulvinar pretium, augue dolor eleifend ante, sed gravida arcu orci nec nisl. Nullam fermentum id erat a lobortis.</p>",
+            "position": 0,
+            "created_at": "2025-11-24T14:39:35.000000Z",
+            "updated_at": "2025-11-24T14:39:35.000000Z",
+            "deleted_at": null,
+            "is_completed": false,
+            "course_progress": [
+              {
+                "id": 59,
+                "user_id": 61,
+                "course_id": 12,
+                "course_batch_id": null,
+                "course_section_id": 19,
+                "course_content_id": 23,
+                "is_completed": true,
+                "completed_at": "2025-11-24T15:50:43.000000Z",
+                "created_at": "2025-11-24T15:50:43.000000Z",
+                "updated_at": "2025-11-24T15:50:43.000000Z",
+                "deleted_at": null
+              }
+            ]
+          },
+          {
+            "id": 24,
+            "name": "Fungsi dan parameter",
+            "course_section_id": 19,
+            "content": "<p><strong>Lorem ipsum dolor sit amet</strong>, consectetur adipiscing elit. Etiam maximus tincidunt egestas. Pellentesque tempor iaculis tellus. Donec eu elit id lectus tempor semper. Sed sapien mauris, fermentum a neque ut, euismod suscipit est. Donec dolor justo, ultricies ac scelerisque a, luctus ut tellus. Aliquam elementum orci eget dolor vestibulum, quis efficitur lorem condimentum. Maecenas interdum erat tortor, sed pretium mi molestie sed. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vestibulum lorem lacus, ullamcorper vel justo id, vulputate maximus nulla. Aliquam eget felis dignissim, lobortis dui eget, cursus ante.</p><p>Phasellus at augue diam. Aliquam erat volutpat. Mauris lacinia eros eu varius vestibulum. Pellentesque nec suscipit arcu. Etiam vel nisi eget odio sagittis porta ac eu quam. In felis dui, consectetur ultricies rhoncus in, rhoncus vel magna. Nunc vitae hendrerit est. Nunc consectetur nibh in mi vehicula tristique. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Cras eleifend diam id orci tempor, quis lacinia odio vestibulum. Pellentesque interdum dui non ante tincidunt, eget gravida metus vehicula. Nullam vel massa ipsum. Phasellus fringilla commodo tincidunt. Praesent non scelerisque nulla. Nulla eu dolor sit amet nulla euismod semper nec non justo.</p><p>Nam sit amet nisl in neque tempor cursus. Quisque fermentum efficitur dolor nec ornare. Fusce convallis, leo at tristique efficitur, purus nulla rutrum ligula, sed congue tellus metus a nisl. Pellentesque mollis lectus eget ante consequat dictum. Sed a ipsum dui. Integer sit amet condimentum sem, ut suscipit ligula. Integer commodo nisl sit amet egestas mollis. Mauris orci orci, facilisis vel vulputate rhoncus, interdum non urna. Quisque risus lorem, condimentum ut leo lacinia, laoreet commodo mauris. Ut non mi tempor, dignissim eros quis, aliquet neque. Proin dictum quam nec metus ultricies imperdiet. Ut tincidunt nisl non convallis gravida. Pellentesque ut ligula rhoncus, tincidunt tortor non, malesuada ex. Donec aliquam mollis lacus. Fusce ex nibh, rutrum nec sollicitudin fermentum, varius et quam.</p><p>Cras vel lacinia nibh. Aliquam a posuere dolor. Cras bibendum ligula turpis, ut consectetur metus porta in. Morbi dapibus hendrerit felis et pulvinar. Donec at lacinia risus. Morbi vel quam laoreet, egestas quam a, aliquet diam. Nulla elementum ligula sed purus maximus tristique. In at euismod dolor. Donec varius odio et ullamcorper convallis. Donec maximus sollicitudin sollicitudin. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Donec fringilla lobortis enim, nec pharetra ipsum pulvinar interdum. Nunc vitae consectetur felis, a euismod nulla. Aliquam accumsan, massa nec pulvinar pretium, augue dolor eleifend ante, sed gravida arcu orci nec nisl. Nullam fermentum id erat a lobortis.</p>",
+            "position": 0,
+            "created_at": "2025-11-24T14:40:54.000000Z",
+            "updated_at": "2025-11-24T14:40:54.000000Z",
+            "deleted_at": null,
+            "is_completed": false,
+            "course_progress": [
+              {
+                "id": 60,
+                "user_id": 61,
+                "course_id": 12,
+                "course_batch_id": null,
+                "course_section_id": 19,
+                "course_content_id": 24,
+                "is_completed": true,
+                "completed_at": "2025-11-24T15:52:39.000000Z",
+                "created_at": "2025-11-24T15:52:39.000000Z",
+                "updated_at": "2025-11-24T15:52:39.000000Z",
+                "deleted_at": null
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 20,
+        "name": "3. Flutter Project Structure",
+        "course_id": 12,
+        "position": 3,
+        "created_at": "2025-11-24T14:32:24.000000Z",
+        "updated_at": "2025-11-24T14:32:24.000000Z",
+        "deleted_at": null,
+        "contents": [
+          {
+            "id": 25,
+            "name": "Fungsi folder lib",
+            "course_section_id": 20,
+            "content": "<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam maximus tincidunt egestas. Pellentesque tempor iaculis tellus. Donec eu elit id lectus tempor semper. Sed sapien mauris, fermentum a neque ut, euismod suscipit est. Donec dolor justo, ultricies ac scelerisque a, luctus ut tellus. Aliquam elementum orci eget dolor vestibulum, quis efficitur lorem condimentum. Maecenas interdum erat tortor, sed pretium mi molestie sed. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vestibulum lorem lacus, ullamcorper vel justo id, vulputate maximus nulla. Aliquam eget felis dignissim, lobortis dui eget, cursus ante.</p><p>Phasellus at augue diam. Aliquam erat volutpat. Mauris lacinia eros eu varius vestibulum. Pellentesque nec suscipit arcu. Etiam vel nisi eget odio sagittis porta ac eu quam. In felis dui, consectetur ultricies rhoncus in, rhoncus vel magna. Nunc vitae hendrerit est. Nunc consectetur nibh in mi vehicula tristique. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Cras eleifend diam id orci tempor, quis lacinia odio vestibulum. Pellentesque interdum dui non ante tincidunt, eget gravida metus vehicula. Nullam vel massa ipsum. Phasellus fringilla commodo tincidunt. Praesent non scelerisque nulla. Nulla eu dolor sit amet nulla euismod semper nec non justo.</p><p><figure data-trix-attachment=\"{&quot;contentType&quot;:&quot;image/jpeg&quot;,&quot;filename&quot;:&quot;2151113746.jpg&quot;,&quot;filesize&quot;:980154,&quot;height&quot;:1000,&quot;href&quot;:&quot;http://127.0.0.1:8000/storage/yAWy6mzvJ7P7ddm7wNxfWYQYfZckbVKnX5UjwFv1.jpg&quot;,&quot;url&quot;:&quot;http://127.0.0.1:8000/storage/yAWy6mzvJ7P7ddm7wNxfWYQYfZckbVKnX5UjwFv1.jpg&quot;,&quot;width&quot;:1500}\" data-trix-content-type=\"image/jpeg\" data-trix-attributes=\"{&quot;presentation&quot;:&quot;gallery&quot;}\" class=\"attachment attachment--preview attachment--jpg\"><a href=\"http://127.0.0.1:8000/storage/yAWy6mzvJ7P7ddm7wNxfWYQYfZckbVKnX5UjwFv1.jpg\"><img src=\"http://127.0.0.1:8000/storage/yAWy6mzvJ7P7ddm7wNxfWYQYfZckbVKnX5UjwFv1.jpg\" width=\"1500\" height=\"1000\"><figcaption class=\"attachment__caption\"><span class=\"attachment__name\">2151113746.jpg</span> <span class=\"attachment__size\">957.18 KB</span></figcaption></a></figure></p><p>Nam sit amet nisl in neque tempor cursus. Quisque fermentum efficitur dolor nec ornare. Fusce convallis, leo at tristique efficitur, purus nulla rutrum ligula, sed congue tellus metus a nisl. Pellentesque mollis lectus eget ante consequat dictum. Sed a ipsum dui. Integer sit amet condimentum sem, ut suscipit ligula. Integer commodo nisl sit amet egestas mollis. Mauris orci orci, facilisis vel vulputate rhoncus, interdum non urna. Quisque risus lorem, condimentum ut leo lacinia, laoreet commodo mauris. Ut non mi tempor, dignissim eros quis, aliquet neque. Proin dictum quam nec metus ultricies imperdiet. Ut tincidunt nisl non convallis gravida. Pellentesque ut ligula rhoncus, tincidunt tortor non, malesuada ex. Donec aliquam mollis lacus. Fusce ex nibh, rutrum nec sollicitudin fermentum, varius et quam.</p><p>Cras vel lacinia nibh. Aliquam a posuere dolor. Cras bibendum ligula turpis, ut consectetur metus porta in. Morbi dapibus hendrerit felis et pulvinar. Donec at lacinia risus. Morbi vel quam laoreet, egestas quam a, aliquet diam. Nulla elementum ligula sed purus maximus tristique. In at euismod dolor. Donec varius odio et ullamcorper convallis. Donec maximus sollicitudin sollicitudin. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Donec fringilla lobortis enim, nec pharetra ipsum pulvinar interdum. Nunc vitae consectetur felis, a euismod nulla. Aliquam accumsan, massa nec pulvinar pretium, augue dolor eleifend ante, sed gravida arcu orci nec nisl. Nullam fermentum id erat a lobortis.</p>",
+            "position": 0,
+            "created_at": "2025-11-24T14:41:57.000000Z",
+            "updated_at": "2025-11-24T14:41:57.000000Z",
+            "deleted_at": null,
+            "is_completed": false,
+            "course_progress": [
+              {
+                "id": 62,
+                "user_id": 61,
+                "course_id": 12,
+                "course_batch_id": null,
+                "course_section_id": 20,
+                "course_content_id": 25,
+                "is_completed": true,
+                "completed_at": "2025-11-24T16:10:50.000000Z",
+                "created_at": "2025-11-24T16:10:50.000000Z",
+                "updated_at": "2025-11-24T16:10:50.000000Z",
+                "deleted_at": null
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "has_batch": false,
+    "pricings": [
+      {
+        "id": 5,
+        "name": "Midle",
+        "price": 1000000,
+        "duration": 80
+      },
+      {
+        "id": 4,
+        "name": "Premium",
+        "price": 1700000,
+        "duration": 0
+      }
+    ]
+  }
   }
   ```
 
@@ -233,35 +440,114 @@ Endpoint untuk melihat dan mengelola kelas.
 ### **Get My Courses**
 
 - **Endpoint:** `GET /api/my-courses`
+
 - **Deskripsi:** Mengambil daftar kelas yang telah diikuti oleh pengguna, termasuk progres mereka.
+
 - **Autentikasi:** **Wajib** (Bearer Token).
+
 - **Respons Sukses (200):**
+
+```json
+{
+  "status": "success",
+
+  "message": "My courses retrieved successfully",
+
+  "count": 1,
+
+  "data": [
+    {
+      "id": 1,
+
+      "name": "Belajar Laravel dari Dasar",
+
+      "slug": "belajar-laravel-dari-dasar",
+
+      "thumbnail": "http://localhost/storage/thumbnails/example.jpg",
+
+      "about": "Deskripsi singkat kelas.",
+
+      "category_id": 1,
+
+      "is_popular": true,
+
+      "progress_percentage": 75,
+
+      "category": { "id": 1, "name": "Web Development" },
+
+      "mentors": [
+        {
+          "user": {
+            "id": 2,
+
+            "name": "Budi Mentor",
+
+            "photo": null
+          }
+        }
+      ],
+
+      "mentors_count": 1
+    }
+  ]
+}
+```
+
+### **Search Courses**
+
+- **Endpoint:** `GET /api/courses/search`
+
+- **Deskripsi:** Mencari kelas berdasarkan nama atau deskripsi.
+
+- **Autentikasi:** Tidak perlu.
+
+- **Parameter Query:**
+
+  - `q` (string, wajib): Kata kunci pencarian.
+
+- **Respons Sukses (200):**
+
   ```json
   {
     "status": "success",
-    "message": "My courses retrieved successfully",
+
+    "message": "Course search results retrieved successfully",
+
     "count": 1,
+
     "data": [
       {
         "id": 1,
+
         "name": "Belajar Laravel dari Dasar",
+
         "slug": "belajar-laravel-dari-dasar",
+
         "thumbnail": "http://localhost/storage/thumbnails/example.jpg",
+
         "about": "Deskripsi singkat kelas.",
+
         "category_id": 1,
+
         "is_popular": true,
-        "progress_percentage": 75,
+
         "category": { "id": 1, "name": "Web Development" },
+
         "mentors": [
           {
             "user": {
               "id": 2,
+
               "name": "Budi Mentor",
+
               "photo": null
             }
           }
         ],
-        "mentors_count": 1
+
+        "mentors_count": 1,
+
+        "price": 100000.0
       }
     ]
   }
@@ -660,6 +946,33 @@ Endpoint untuk melihat dan mengelola struktur internal sebuah kelas.
   }
   ```
 
+### **Mark Content as Incomplete**
+
+- **Endpoint:** `DELETE /api/courses/{courseId}/contents/{contentId}/complete`
+- **Deskripsi:** Menghapus status selesai dari sebuah konten untuk pengguna yang sedang login.
+- **Autentikasi:** **Wajib** (Bearer Token).
+- **Parameter URL:**
+  - `courseId` (integer, wajib): ID dari course.
+  - `contentId` (integer, wajib): ID dari content yang akan ditandai belum selesai.
+- **Respons Sukses (200):**
+  ```json
+  {
+    "message": "Content marked as incomplete"
+  }
+  ```
+- **Respons Error (403):** Jika user tidak terdaftar di course.
+  ```json
+  {
+    "message": "You are not enrolled in this course"
+  }
+  ```
+- **Respons Error (404):** Jika course atau content tidak ditemukan.
+  ```json
+  {
+    "message": "Course or content not found"
+  }
+  ```
+
 ### **Create Section**
 
 - **Endpoint:** `POST /api/sections`
@@ -931,9 +1244,9 @@ Endpoint untuk melihat dan mengelola struktur internal sebuah kelas.
 ### **Create Transaction**
 
 - **Endpoint:** `POST /api/transactions`
-- **Deskripsi:** Membuat transaksi baru untuk membeli kelas.
+- **Deskripsi:** Membuat transaksi baru untuk membeli kelas. Mendukung pembayaran manual dan Midtrans.
 - **Autentikasi:** **Wajib** (Bearer Token).
-- **Request Body:**
+- **Request Body (Pembayaran Manual):**
   ```json
   {
     "course_id": 1,
@@ -946,16 +1259,59 @@ Endpoint untuk melihat dan mengelola struktur internal sebuah kelas.
     "grand_total_amount": 110000
   }
   ```
-- **Respons Sukses (201):**
+- **Request Body (Pembayaran Midtrans):**
+  ```json
+  {
+    "course_id": 1,
+    "pricing_id": 1,
+    "payment_type": "midtrans"
+  }
+  ```
+- **Respons Sukses (201) - Pembayaran Manual:**
   ```json
   {
     "status": "success",
-    "message": "Transaction created successfully",
+    "message": "Transaction created successfully. Waiting for payment.",
     "data": {
       "transaction_id": "INV-20251111-12345",
       "status": "pending",
       "grand_total_amount": 110000
     }
+  }
+  ```
+- **Respons Sukses (201) - Pembayaran Midtrans:**
+  ```json
+  {
+    "status": "success",
+    "message": "Midtrans payment initiated successfully.",
+    "data": {
+      "snap_token": "YOUR_MIDTRANS_SNAP_TOKEN"
+    }
+  }
+  ```
+
+### **Midtrans Webhook**
+
+- **Endpoint:** `POST /api/midtrans/webhook`
+- **Deskripsi:** Endpoint ini digunakan oleh Midtrans untuk mengirim notifikasi status pembayaran. **Tidak dipanggil langsung oleh frontend.**
+- **Autentikasi:** Tidak perlu (Midtrans akan mengirimkan notifikasi dengan mekanisme keamanannya sendiri).
+- **Request Body:** (Dikirim oleh Midtrans, contoh payload dapat dilihat di dokumentasi Midtrans)
+- **Respons Sukses (200):**
+  ```json
+  {
+    "message": "Notification handled successfully"
+  }
+  ```
+- **Respons Error (404):** Jika transaksi tidak ditemukan.
+  ```json
+  {
+    "message": "Transaction not found"
+  }
+  ```
+- **Respons Error (500):** Jika terjadi kesalahan server saat memproses notifikasi.
+  ```json
+  {
+    "message": "Failed to handle notification: ..."
   }
   ```
 
@@ -986,6 +1342,7 @@ Endpoint untuk melihat dan mengelola struktur internal sebuah kelas.
         "is_paid": false,
         "created_at": "...",
         "updated_at": "...",
+        "midtrans_snap_token": null,
         "course": {
           "id": 1,
           "name": "Belajar Laravel dari Dasar",
@@ -1027,6 +1384,7 @@ Endpoint untuk melihat dan mengelola struktur internal sebuah kelas.
       "is_paid": false,
       "created_at": "...",
       "updated_at": "...",
+      "midtrans_snap_token": null,
       "course": {
         "id": 1,
         "name": "Belajar Laravel dari Dasar",
@@ -1105,102 +1463,349 @@ Endpoint untuk melihat dan mengelola struktur internal sebuah kelas.
     ]
   }
   ```
+
+### **Create Certificate**
+
+- **Endpoint:** `POST /api/certificates`
+- **Deskripsi:** Membuat record sertifikat baru. Pembuatan record ini akan secara otomatis memicu proses pembuatan file PDF sertifikat di backend. Endpoint ini sebaiknya dipanggil setelah pengguna dipastikan telah menyelesaikan sebuah kelas.
+- **Autentikasi:** **Wajib** (Bearer Token).
+- **Request Body:**
+  ```json
+  {
+    "course_id": 1,
+    "course_batch_id": 2,
+    "course_progress_id": 5
+  }
+  ```
+- **Respons Sukses (201):**
+  ```json
+  {
+    "status": "success",
+    "message": "Certificate created successfully. The PDF is being generated.",
+    "data": {
+      "user_id": 1,
+      "course_id": "1",
+      "course_batch_id": "2",
+      "course_progress_id": "5",
+      "code": "CERT-A1B2C3D4E5",
+      "updated_at": "2025-11-20T10:00:00.000000Z",
+      "created_at": "2025-11-20T10:00:00.000000Z",
+      "id": 2
+    }
+  }
+  ```
+- **Respons Error (422):** Jika data validasi gagal (misal: ID tidak ada).
+  ```json
+  {
+    "message": "The given data was invalid.",
+    "errors": {
+      "course_id": ["The selected course id is invalid."]
+    }
+  }
+  ```
+
 ---
 
 ## 10. Percobaan Kuis (Quiz Attempts)
 
+### **Get All Quiz Attempts**
+
+- **Endpoint:** `GET /api/quiz-attempts`
+- **Deskripsi:** Mengambil semua percobaan kuis yang dilakukan oleh pengguna yang sedang login, beserta jawaban siswa.
+- **Autentikasi:** **Wajib** (Bearer Token).
+- **Respons Sukses (200):**
+  ```json
+  {
+    "status": "success",
+    "message": "Quiz attempts retrieved successfully",
+    "data": [
+      {
+        "id": 1,
+        "user_id": 1,
+        "quiz_id": 1,
+        "start_time": "2025-11-14T10:00:00.000000Z",
+        "end_time": "2025-11-14T10:30:00.000000Z",
+        "score": 95,
+        "passed": true,
+        "created_at": "2025-11-14T10:35:00.000000Z",
+        "updated_at": "2025-11-14T10:35:00.000000Z",
+        "student_answers": [
+          {
+            "id": 1,
+            "quiz_attempt_id": 1,
+            "question_id": 1,
+            "question_option_id": 2,
+            "created_at": "2025-11-14T10:35:00.000000Z",
+            "updated_at": "2025-11-14T10:35:00.000000Z",
+            "question_option": {
+              "id": 2,
+              "question_id": 1,
+              "option_text": "Jawaban Benar",
+              "is_correct": true
+            }
+          },
+          {
+            "id": 2,
+            "quiz_attempt_id": 1,
+            "question_id": 2,
+            "question_option_id": 5,
+            "created_at": "2025-11-14T10:35:00.000000Z",
+            "updated_at": "2025-11-14T10:35:00.000000Z",
+            "question_option": {
+              "id": 5,
+              "question_id": 2,
+              "option_text": "Jawaban Salah",
+              "is_correct": false
+            }
+          }
+        ]
+      }
+    ]
+  }
+  ```
+- **Respons Error (401):** Jika pengguna tidak terautentikasi.
+  ```json
+  {
+    "message": "Unauthenticated."
+  }
+  ```
+
+````
+-   **Respons Error (500):** Jika terjadi kesalahan server.
+  ```json
+  {
+    "status": "error",
+    "message": "Failed to retrieve quiz attempts: ...",
+  }
+  ```
+
 ### **Create Quiz Attempt**
 
 -   **Endpoint:** `POST /api/quiz-attempts`
--   **Deskripsi:** Menyimpan data percobaan kuis yang dilakukan oleh pengguna.
+-   **Deskripsi:** Menyimpan data percobaan kuis yang telah diselesaikan oleh pengguna, termasuk semua jawabannya.
 -   **Autentikasi:** **Wajib** (Bearer Token).
 -   **Request Body:**
-    ```json
-    {
+  ```json
+  {
+    "quiz_id": 1,
+    "score": 95,
+    "start_time": "2025-11-14 10:00:00",
+    "end_time": "2025-11-14 10:30:00",
+    "passed": true,
+    "answers": [
+      {
+        "question_id": 1,
+        "question_option_id": 2
+      },
+      {
+        "question_id": 2,
+        "question_option_id": 5
+      }
+    ]
+  }
+````
+
+- **Respons Sukses (201):**
+  ```json
+  {
+    "status": "success",
+    "message": "Quiz attempt stored successfully",
+    "data": {
       "user_id": 1,
       "quiz_id": 1,
-      "start_time": "2025-11-13 10:00:00",
-      "end_time": "2025-11-13 10:30:00",
-      "score": 85,
-      "passed": true
+      "score": 95,
+      "start_time": "2025-11-14T10:00:00.000000Z",
+      "end_time": "2025-11-14T10:30:00.000000Z",
+      "passed": true,
+      "updated_at": "2025-11-14T10:35:00.000000Z",
+      "created_at": "2025-11-14T10:35:00.000000Z",
+      "id": 1
     }
-    ```
--   **Respons Sukses (201):**
-    ```json
-    {
-      "message": "Quiz attempt created successfully.",
-      "data": {
-        "user_id": 1,
-        "quiz_id": 1,
-        "start_time": "2025-11-13T10:00:00.000000Z",
-        "end_time": "2025-11-13T10:30:00.000000Z",
-        "score": 85,
-        "passed": true,
-        "updated_at": "2025-11-13T10:35:00.000000Z",
-        "created_at": "2025-11-13T10:35:00.000000Z",
-        "id": 1
-      }
-    }
-    ```
--   **Respons Error (422):** Jika data validasi gagal.
-    ```json
-    {
-      "message": "The given data was invalid.",
-      "errors": {
-        "user_id": [
-          "The selected user id is invalid."
-        ],
-        "end_time": [
-          "The end time must be a date after start time."
-        ]
-      }
-    }
-    ```
--   **Respons Error (500):** Jika terjadi kesalahan server.
-    ```json
-    {
-      "message": "Failed to create quiz attempt.",
-      "error": "..."
-    }
-    ```
-
-### **Get Quiz Attempts by User, Section, and Content**
-
--   **Endpoint:** `GET /api/my-quiz-attempts/section/{sectionId}/content/{contentId}`
--   **Deskripsi:** Mengambil data percobaan kuis yang dilakukan oleh pengguna yang sedang login, difilter berdasarkan ID section dan ID content.
--   **Autentikasi:** **Wajib** (Bearer Token).
--   **Parameter URL:**
-    -   `sectionId` (integer, wajib): ID dari section.
-    -   `contentId` (integer, wajib): ID dari content.
--   **Respons Sukses (200):**
-    ```json
-    {
-      "message": "Quiz attempts retrieved successfully.",
-      "data": [
-        {
-          "id": 1,
-          "user_id": 1,
-          "quiz_id": 1,
-          "start_time": "2025-11-13T10:00:00.000000Z",
-          "end_time": "2025-11-13T10:30:00.000000Z",
-          "score": 85,
-          "passed": true,
-          "created_at": "2025-11-13T10:35:00.000000Z",
-          "updated_at": "2025-11-13T10:35:00.000000Z"
-        }
+  }
+  ```
+- **Respons Error (422):** Jika data validasi gagal.
+  ```json
+  {
+    "message": "The given data was invalid.",
+    "errors": {
+      "quiz_id": ["The selected quiz id is invalid."],
+      "answers.0.question_id": [
+        "The selected answers.0.question_id is invalid."
       ]
     }
-    ```
--   **Respons Error (401):** Jika pengguna tidak terautentikasi.
-    ```json
-    {
-      "message": "Unauthenticated."
+  }
+  ```
+- **Respons Error (500):** Jika terjadi kesalahan server.
+  ```json
+  {
+    "status": "error",
+    "message": "Failed to store quiz attempt: ..."
+  }
+  ```
+
+---
+
+## Transaksi (Transactions) - Khusus Frontend & Midtrans
+
+Bagian ini merinci endpoint-endpoint yang relevan untuk frontend dalam mengelola transaksi dan integrasi pembayaran Midtrans.
+
+### 1. Membuat Transaksi Baru (Melalui Midtrans)
+
+- **Endpoint:** `/transactions`
+- **Metode:** `POST`
+- **Deskripsi:** Membuat transaksi baru dan memulai proses pembayaran Midtrans. **Semua transaksi yang dibuat melalui API ini akan otomatis diarahkan ke Midtrans.**
+- **Autentikasi:** Diperlukan (Bearer Token).
+- **Request Body:**
+  - `course_id` (integer, required): ID kursus yang akan dibeli.
+  - `pricing_id` (integer, required): ID opsi harga yang dipilih untuk kursus.
+  - `course_batch_id` (integer, nullable): ID batch kursus, jika ada.
+  - `sub_total_amount` (integer, required): Jumlah sub-total transaksi (sebelum pajak).
+  - `total_tax_amount` (integer, required): Jumlah total pajak.
+  - `grand_total_amount` (integer, required): Jumlah total transaksi (sub-total + pajak).
+  - `payment_type` (string, optional): Meskipun opsional, backend akan secara otomatis mengaturnya ke `'midtrans'` untuk transaksi API. Anda bisa mengirimkannya sebagai `'midtrans'` atau tidak sama sekali.
+- **Contoh Request Body:**
+  ```json
+  {
+    "course_id": 1,
+    "pricing_id": 1,
+    "course_batch_id": null,
+    "sub_total_amount": 500000,
+    "total_tax_amount": 50000,
+    "grand_total_amount": 550000
+  }
+  ```
+- **Contoh Response (201 Created):**
+  ```json
+  {
+    "status": "success",
+    "message": "Midtrans payment initiated successfully.",
+    "data": {
+      "snap_token": "YOUR_MIDTRANS_SNAP_TOKEN_HERE"
     }
-    ```
--   **Respons Error (500):** Jika terjadi kesalahan server.
-    ```json
-    {
-      "message": "Failed to retrieve quiz attempts.",
-      "error": "..."
-    }
-    ```
+  }
+  ```
+  - **`snap_token`**: Token ini adalah kunci yang akan Anda gunakan di frontend untuk memuat pop-up pembayaran Midtrans.
+
+### 2. Midtrans Webhook
+
+- **Endpoint:** `/midtrans/webhook`
+- **Metode:** `POST`
+- **Deskripsi:** Endpoint ini digunakan oleh Midtrans untuk mengirim notifikasi status pembayaran. **Endpoint ini tidak dipanggil langsung oleh frontend.** Backend Anda akan menerima notifikasi ini untuk memperbarui status transaksi.
+- **Autentikasi:** Tidak diperlukan (Midtrans akan mengirimkan notifikasi dengan mekanisme keamanannya sendiri).
+- **Request Body:** (Dikirim oleh Midtrans, contoh payload dapat dilihat di dokumentasi Midtrans)
+- **Contoh Response (200 OK):**
+  ```json
+  {
+    "message": "Notification handled successfully"
+  }
+  ```
+- **Contoh Response (404 Not Found):** Jika transaksi tidak ditemukan.
+  ```json
+  {
+    "message": "Transaction not found"
+  }
+  ```
+
+````
+*   **Contoh Response (500 Internal Server Error):** Jika terjadi kesalahan server saat memproses notifikasi.
+  ```json
+  {
+      "status": "error",
+      "message": "Failed to handle notification: ..."
+  }
+  ```
+
+### 3. Mendapatkan Transaksi Saya
+
+*   **Endpoint:** `/my-transactions`
+*   **Metode:** `GET`
+*   **Deskripsi:** Mengambil daftar semua transaksi yang dilakukan oleh pengguna yang sedang login.
+*   **Autentikasi:** Diperlukan (Bearer Token).
+*   **Contoh Response (200 OK):**
+  ```json
+  {
+      "status": "success",
+      "message": "My transactions retrieved successfully.",
+      "count": 1,
+      "data": [
+          {
+              "id": 1,
+              "user_id": 1,
+              "course_id": 1,
+              "pricing_id": 1,
+              "course_batch_id": 1,
+              "booking_trx_id": "invd#001",
+              "payment_type": "midtrans",
+              "proof": null,
+              "sub_total_amount": 100000,
+              "total_tax_amount": 10000,
+              "grand_total_amount": 110000,
+              "is_paid": false,
+              "created_at": "...",
+              "updated_at": "...",
+              "midtrans_snap_token": "YOUR_MIDTRANS_SNAP_TOKEN_HERE",
+              "course": {
+                "id": 1,
+                "name": "Belajar Laravel dari Dasar",
+                "slug": "belajar-laravel-dari-dasar"
+              },
+              "pricing": {
+                "id": 1,
+                "name": "30 Hari",
+                "price": 100000
+              }
+          }
+      ]
+  }
+  ```
+
+### 4. Mendapatkan Detail Transaksi Tunggal
+
+*   **Endpoint:** `/transactions/{bookingTrxId}`
+*   **Metode:** `GET`
+*   **Deskripsi:** Mengambil detail transaksi spesifik berdasarkan `booking_trx_id`. Hanya pengguna yang memiliki transaksi tersebut yang dapat mengaksesnya.
+*   **Autentikasi:** Diperlukan (Bearer Token).
+*   **Path Parameters:**
+  *   `bookingTrxId` (string, required) - Kode unik transaksi (misal: `invd#001`).
+*   **Contoh Response (200 OK):**
+  ```json
+  {
+      "status": "success",
+      "message": "Transaction details retrieved successfully.",
+      "data": {
+          "id": 1,
+          "user_id": 1,
+          "course_id": 1,
+          "pricing_id": 1,
+          "course_batch_id": 1,
+          "booking_trx_id": "invd#001",
+          "payment_type": "midtrans",
+          "proof": null,
+          "sub_total_amount": 100000,
+          "total_tax_amount": 10000,
+          "grand_total_amount": 110000,
+          "is_paid": false,
+          "created_at": "...",
+          "updated_at": "...",
+          "midtrans_snap_token": "YOUR_MIDTRANS_SNAP_TOKEN_HERE",
+          "course": {
+            "id": 1,
+            "name": "Belajar Laravel dari Dasar",
+            "slug": "belajar-laravel-dari-dasar"
+          },
+          "pricing": {
+            "id": 1,
+            "name": "30 Hari",
+            "price": 100000
+          }
+      }
+  }
+  ```
+*   **Contoh Response (404 Not Found):**
+  ```json
+  {
+      "status": "error",
+      "message": "Transaction not found or you do not have access to it."
+  }
+  ```
+````

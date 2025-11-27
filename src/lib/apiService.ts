@@ -1,8 +1,6 @@
 import axios from "axios";
 
 // Ganti baseURL sesuai environment kamu
-// Saat di lokal, biasanya Laravel jalan di http://127.0.0.1:8000/api
-// Kalau nanti di hosting, ubah ke URL server kamu
 const api = axios.create({
   baseURL: "http://127.0.0.1:8000/api",
   headers: {
@@ -11,13 +9,27 @@ const api = axios.create({
   },
 });
 
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
 // 🧩 Interceptor: Tambahkan token Sanctum otomatis jika tersedia
 api.interceptors.request.use(
   (config) => {
     if (typeof window !== "undefined") {
-      const token = localStorage.getItem("token");
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+      const accessToken = localStorage.getItem("access_token");
+      if (accessToken) {
+        config.headers.Authorization = `Bearer ${accessToken}`;
       }
     }
     return config;
@@ -25,16 +37,54 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// 🧱 (Opsional) Interceptor respons: logout otomatis jika token invalid
+// 🧱 (Opsional) Interceptor respons: handle token refresh dan logout otomatis jika token invalid
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      if (typeof window !== "undefined") {
-        localStorage.removeItem("token");
-        window.location.href = "/login"; // Redirect ke login jika unauthorized
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Check if it's a 401 and not a refresh token request itself
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        // If a token refresh is already in progress, queue the failed request
+        return new Promise(function(resolve, reject) {
+          failedQueue.push({ resolve, reject });
+        })
+        .then(token => {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          return api(originalRequest);
+        })
+        .catch(err => {
+          return Promise.reject(err);
+        });
       }
+
+      originalRequest._retry = true; // Mark request as retried
+      isRefreshing = true;
+
+      return new Promise(async (resolve, reject) => {
+        try {
+          const newAccessToken = await refreshToken(); // Call the refresh token function
+          api.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`; // Update default header
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`; // Update original request header
+          processQueue(null, newAccessToken); // Process queued requests
+          resolve(api(originalRequest)); // Retry the original request
+        } catch (refreshError) {
+          processQueue(refreshError, null); // Clear queue with error
+          // Clear tokens and redirect on refresh failure
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("refresh_token");
+          if (typeof window !== "undefined") {
+            window.location.href = "/login";
+          }
+          reject(refreshError);
+        } finally {
+          isRefreshing = false;
+        }
+      });
     }
+
+    // If it's not a 401 or _retry is already true, just reject the promise
     return Promise.reject(error);
   }
 );
@@ -56,11 +106,32 @@ export const getCourses = async (params = {}) => {
   }
 };
 
+export const searchCourses = async (query: string) => {
+  try {
+    const response = await api.get("/courses/search", { params: { q: query } });
+    if (Array.isArray(response.data.data)) {
+      return response.data.data;
+    }
+    console.warn("Unexpected response structure for search results:", response.data);
+    return [];
+  } catch (error) {
+    console.error("Error searching courses:", error);
+    return [];
+  }
+};
+
 export const getCategories = async () => {
   try {
     const response = await api.get("/categories");
-    // The API returns { status: ..., message: ..., data: { "id1": {...}, "id2": {...} } }
-    // We need to get the values from the inner 'data' object.
+    // Check if response.data is an array (direct list of categories)
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+    // Check if response.data has a 'data' property that is an array
+    if (response.data && Array.isArray(response.data.data)) {
+      return response.data.data;
+    }
+    // Fallback for object of objects, if that's the structure
     if (response.data && typeof response.data.data === 'object' && response.data.data !== null) {
       return Object.values(response.data.data);
     }
@@ -82,19 +153,53 @@ export const getStats = async () => {
   }
 };
 
-export const getPopularCourses = async () => {
+
+export async function getPopularCourses() {
   try {
     const response = await api.get("/courses/popular");
-    return response.data;
+    if (Array.isArray(response.data.data)) {
+      return response.data;
+    }
+    console.warn("Unexpected response structure for popular courses:", response.data);
+    return { data: [] };
   } catch (error) {
-    console.error("Error fetching popular courses:", error);
-    return null;
+    console.error("Failed to fetch popular courses:", error);
+    return { data: [] };
   }
-};
+}
 
 export const loginUser = async (credentials) => {
   const response = await api.post("/login", credentials);
+  if (response.data.access_token) {
+    localStorage.setItem("access_token", response.data.access_token);
+    if (response.data.refresh_token) {
+      localStorage.setItem("refresh_token", response.data.refresh_token);
+    }
+  }
   return response.data;
+};
+
+export const refreshToken = async () => {
+  try {
+    const refreshToken = localStorage.getItem("refresh_token");
+    if (!refreshToken) {
+      throw new Error("No refresh token found");
+    }
+    const response = await api.post("/refresh", { refresh_token: refreshToken });
+    if (response.data.access_token) {
+      localStorage.setItem("access_token", response.data.access_token);
+      if (response.data.refresh_token) {
+        localStorage.setItem("refresh_token", response.data.refresh_token);
+      }
+      return response.data.access_token;
+    }
+    throw new Error("Failed to refresh token");
+  } catch (error) {
+    console.error("Error refreshing token:", error);
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    throw error;
+  }
 };
 
 export const registerUser = async (userData) => {
@@ -231,14 +336,34 @@ export const getTransactionDetail = async (id: string | number) => {
     return response.data.data;
   } catch (error) {
     console.error(`Error fetching transaction ${id}:`, error);
-    throw error; // Re-throw to be handled by the component
+    throw error;
   }
 };
 
 export const deleteContent = (contentId: number) => api.delete(`/contents/${contentId}`);
 
 // --- Quiz Attempts Endpoints ---
-export const createQuizAttempt = (payload: any) => api.post('/quiz-attempts', payload);
-export const getQuizAttemptsByContent = (sectionId: number, contentId: number) => api.get(`/my-quiz-attempts/section/${sectionId}/content/${contentId}`);
+export const createQuizAttempt = async (payload: any) => {
+  const response = await api.post('/quiz-attempts', payload);
+  return response.data;
+};
+export const getQuizAttempts = () => api.get('/quiz-attempts');
+
+export const createTransaction = async (payload: any) => {
+  const response = await api.post("/transactions", payload);
+  return response.data;
+};
+
+// --- Content Completion Endpoints ---
+export const markContentAsComplete = (courseId: number, contentId: number) => 
+  api.post(`/courses/${courseId}/contents/${contentId}/complete`);
+
+export const markContentAsIncomplete = (courseId: number, contentId: number) =>
+  api.delete(`/courses/${courseId}/contents/${contentId}/complete`);
+
+export const createCertificate = async (payload: any) => {
+  const response = await api.post("/certificates", payload);
+  return response.data;
+};
 
 export default api;

@@ -37,6 +37,8 @@ const DetailCoursePage = ({ params }) => {
     1: true,
     2: false,
   });
+  const [selectedBatchId, setSelectedBatchId] = useState(null);
+  const [selectedPricingId, setSelectedPricingId] = useState(null);
 
   useEffect(() => {
     const fetchCourseData = async () => {
@@ -61,6 +63,21 @@ const DetailCoursePage = ({ params }) => {
       fetchCourseData();
     }
   }, [resolvedParams.slug]);
+
+  useEffect(() => {
+    if (!courseData) return;
+
+    if (courseData.has_batch && courseData.batches?.length > 0) {
+      const firstAvailableBatch = courseData.batches.find(
+        (b) => b.is_available && b.pricing
+      );
+      if (firstAvailableBatch) {
+        setSelectedBatchId(firstAvailableBatch.id);
+      }
+    } else if (!courseData.has_batch && courseData.pricings?.length > 0) {
+      setSelectedPricingId(courseData.pricings[0].id);
+    }
+  }, [courseData]);
 
   const toggleSection = (section) => {
     setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
@@ -90,12 +107,25 @@ const DetailCoursePage = ({ params }) => {
       0
     ) || 0;
 
-  // Determine price: prefer first pricing entry if available, else fallback to courseData.price
-  const pricingEntry =
-    courseData?.pricings && courseData.pricings.length
-      ? courseData.pricings[0]
-      : null;
-  const price = pricingEntry?.price ?? courseData?.price ?? 0;
+  const availableBatches =
+    courseData?.batches?.filter(
+      (b) => b.is_available && b.pricing
+    ) || [];
+
+  // Determine price from selected batch or pricing option
+  const selectedBatch =
+    courseData?.batches?.find((b) => b.id === selectedBatchId) || null;
+  const selectedPricing =
+    courseData?.pricings?.find((p) => p.id === selectedPricingId) || null;
+
+  const price =
+    (courseData?.has_batch
+      ? selectedBatch?.pricing?.price
+      : selectedPricing?.price) ?? 0;
+
+  const handleBatchChange = (event) => {
+    setSelectedBatchId(Number(event.target.value));
+  };
 
   const handleSmoothScroll = (event, targetId) => {
     event.preventDefault();
@@ -111,6 +141,20 @@ const DetailCoursePage = ({ params }) => {
         behavior: "smooth",
       });
     }
+  };
+
+  const getYouTubeEmbedUrl = (url) => {
+    if (!url) return null;
+    let videoId = null;
+    const regExp =
+      /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    if (match && match[2].length === 11) {
+      videoId = match[2];
+    } else {
+      return null;
+    }
+    return `https://www.youtube.com/embed/${videoId}`;
   };
 
   const tabs = [
@@ -161,7 +205,7 @@ const DetailCoursePage = ({ params }) => {
                     <div className="w-14 h-14 flex-shrink-0">
                       <Image
                         src={
-                          ensureAbsoluteUrl(mentor?.photo) ||
+                          ensureAbsoluteUrl(mentor?.photo_url) ||
                           "https://via.placeholder.com/56x56"
                         }
                         alt="Instructor"
@@ -186,7 +230,7 @@ const DetailCoursePage = ({ params }) => {
                     <iframe
                       className="absolute top-0 left-0 w-full h-full"
                       src={
-                        courseData.video_url ||
+                        getYouTubeEmbedUrl(courseData?.video) ||
                         "https://www.youtube.com/embed/5JVjl5kzTRk"
                       }
                       title="YouTube video player"
@@ -240,7 +284,7 @@ const DetailCoursePage = ({ params }) => {
                           delay={0.1 * index}
                         >
                           <div className="p-4 transition-all duration-300 rounded-xl">
-                            <div className="flex items-center gap-5">
+                            <div className="flex items-start gap-5">
                               <div className="flex-shrink-0 w-16 h-16 flex items-center justify-center bg-blue-100 text-blue-600 rounded-xl shadow-lg p-2">
                                 <Image
                                   src="/assets/images/web.png"
@@ -250,9 +294,16 @@ const DetailCoursePage = ({ params }) => {
                                   className="object-contain"
                                 />
                               </div>
-                              <p className="text-gray-700 font-semibold text-lg">
-                                {benefit.description}
-                              </p>
+                              <div className="flex-1">
+                                <p className="text-gray-700 font-semibold text-lg">
+                                  {benefit.name}
+                                </p>
+                                {benefit.description && (
+                                  <p className="text-gray-600 text-base mt-1">
+                                    {benefit.description}
+                                  </p>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </AnimatedContent>
@@ -267,7 +318,10 @@ const DetailCoursePage = ({ params }) => {
                       Kurikulum Kursus
                     </h2>
                     <div className="space-y-4">
-                      {courseData.sections?.map((section, index) => (
+                      {courseData.sections
+                        ?.slice()
+                        .sort((a, b) => a.position - b.position)
+                        .map((section, index) => (
                         <div
                           key={index}
                           className="border border-gray-200/80 bg-white rounded-xl overflow-hidden shadow-sm"
@@ -308,7 +362,10 @@ const DetailCoursePage = ({ params }) => {
                                 className="overflow-hidden"
                               >
                                 <div className="p-5 bg-gray-50/80 border-t border-gray-200">
-                                  {section.contents?.map((content, mIndex) => (
+                                  {section.contents
+                                    ?.slice()
+                                    .sort((a, b) => a.position - b.position)
+                                    .map((content, mIndex) => (
                                     <a
                                       key={mIndex}
                                       href="#"
@@ -338,7 +395,7 @@ const DetailCoursePage = ({ params }) => {
                     <div className="p-6 bg-white rounded-2xl shadow-lg flex flex-col sm:flex-row items-center gap-4 sm:gap-8">
                       <Image
                         src={
-                          ensureAbsoluteUrl(mentor?.photo) ||
+                          ensureAbsoluteUrl(mentor?.photo_url) ||
                           "https://via.placeholder.com/56x56"
                         }
                         alt="Mentor Profile Picture"
@@ -354,7 +411,8 @@ const DetailCoursePage = ({ params }) => {
                         <div className="flex flex-col sm:flex-row justify-center sm:justify-start items-center gap-4 sm:gap-6 text-gray-600">
                           <span className="flex items-center gap-2 font-medium">
                             <FaPlayCircle className="text-blue-500" />
-                            {mentor?.total_courses ||
+                            {mentor?.classes_taught_count ||
+                              mentor?.total_courses ||
                               mentor?.courses_count ||
                               mentor?.statistics?.total_courses ||
                               0}{" "}
@@ -362,7 +420,8 @@ const DetailCoursePage = ({ params }) => {
                           </span>
                           <span className="flex items-center gap-2 font-medium">
                             <FaUserFriends className="text-blue-500" />
-                            {mentor?.total_students ||
+                            {mentor?.total_students_count ||
+                              mentor?.total_students ||
                               mentor?.students_count ||
                               mentor?.statistics?.total_students ||
                               0}{" "}
@@ -394,6 +453,161 @@ const DetailCoursePage = ({ params }) => {
                       </ul>
                     </div>
                   </section>
+
+                  <hr className="border-gray-200" />
+
+                  {availableBatches.length > 0 ? (
+                    <section id="batch-selection">
+                      <h2 className="text-3xl font-bold text-gray-800 mb-6">
+                        Pilih Batch
+                      </h2>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {availableBatches.map((batch) => {
+                          const isSelected = batch.id === selectedBatchId;
+                          const isFull = batch.quota <= batch.student_count;
+                          const filledPercentage =
+                            (batch.student_count / batch.quota) * 100;
+
+                          return (
+                            <motion.div
+                              key={batch.id}
+                              onClick={() =>
+                                !isFull && setSelectedBatchId(batch.id)
+                              }
+                              className={`relative p-5 rounded-2xl cursor-pointer transition-all duration-300 border-2 ${
+                                isSelected
+                                  ? "border-blue-500 bg-blue-50/50 scale-105 shadow-xl"
+                                  : "border-gray-200 bg-white hover:border-blue-400"
+                              } ${
+                                isFull
+                                  ? "cursor-not-allowed bg-gray-100 opacity-70"
+                                  : ""
+                              }`}
+                              whileHover={{
+                                scale: isSelected || isFull ? 1.05 : 1.02,
+                              }}
+                            >
+                              {isSelected && (
+                                <div className="absolute -top-3 -right-3 bg-blue-500 text-white rounded-full p-1 shadow-lg">
+                                  <FaCheckCircle size={16} />
+                                </div>
+                              )}
+
+                              <div className="flex justify-between items-start mb-2">
+                                <h4 className="text-xl font-bold text-gray-800">
+                                  {batch.name}
+                                </h4>
+                                {isFull && (
+                                  <span className="text-sm font-semibold py-1 px-3 rounded-full bg-red-100 text-red-700">
+                                    Penuh
+                                  </span>
+                                )}
+                              </div>
+
+                              <p className="text-gray-600 text-sm">
+                                Mentor: {batch.mentor?.name || "N/A"}
+                              </p>
+                              <p className="text-gray-600 text-sm mb-3">
+                                Periode:{" "}
+                                {new Date(batch.start_date).toLocaleDateString(
+                                  "id-ID",
+                                  {
+                                    year: "numeric",
+                                    month: "long",
+                                    day: "numeric",
+                                  }
+                                )}{" "}
+                                -{" "}
+                                {new Date(batch.end_date).toLocaleDateString(
+                                  "id-ID",
+                                  {
+                                    year: "numeric",
+                                    month: "long",
+                                    day: "numeric",
+                                  }
+                                )}
+                              </p>
+
+                              <div className="text-2xl font-bold text-blue-600 mb-4">
+                                Rp{" "}
+                                {Number(batch.pricing.price).toLocaleString(
+                                  "id-ID"
+                                )}
+                              </div>
+
+                              {!isFull && (
+                                <div>
+                                  <div className="w-full bg-gray-200 rounded-full h-2.5 mb-1">
+                                    <motion.div
+                                      className="bg-blue-500 h-2.5 rounded-full"
+                                      initial={{ width: 0 }}
+                                      animate={{ width: `${filledPercentage}%` }}
+                                      transition={{
+                                        duration: 1,
+                                        ease: "easeOut",
+                                      }}
+                                    ></motion.div>
+                                  </div>
+                                  <p className="text-xs text-gray-500 text-right">
+                                    {batch.student_count}/{batch.quota} terisi
+                                  </p>
+                                </div>
+                              )}
+                            </motion.div>
+                          );
+                        })}
+                      </div>
+                    </section>
+                  ) : courseData.pricings?.length > 0 ? (
+                    <section id="pricing-selection">
+                      <h2 className="text-3xl font-bold text-gray-800 mb-6">
+                        Pilih Paket
+                      </h2>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {courseData.pricings.map((pricing) => {
+                          const isSelected =
+                            pricing.id === selectedPricingId;
+
+                          return (
+                            <motion.div
+                              key={pricing.id}
+                              onClick={() =>
+                                setSelectedPricingId(pricing.id)
+                              }
+                              className={`relative p-5 rounded-2xl cursor-pointer transition-all duration-300 border-2 ${
+                                isSelected
+                                  ? "border-blue-500 bg-blue-50/50 scale-105 shadow-xl"
+                                  : "border-gray-200 bg-white hover:border-blue-400"
+                              }`}
+                              whileHover={{
+                                scale: isSelected ? 1.05 : 1.02,
+                              }}
+                            >
+                              {isSelected && (
+                                <div className="absolute -top-3 -right-3 bg-blue-500 text-white rounded-full p-1 shadow-lg">
+                                  <FaCheckCircle size={16} />
+                                </div>
+                              )}
+                              <h4 className="text-xl font-bold text-gray-800 mb-2">
+                                {pricing.name}
+                              </h4>
+                              <div className="text-2xl font-bold text-blue-600 mb-4">
+                                Rp{" "}
+                                {Number(pricing.price).toLocaleString(
+                                  "id-ID"
+                                )}
+                              </div>
+                              <p className="text-gray-600 text-sm">
+                                {pricing.duration > 0
+                                  ? `Akses selama ${pricing.duration} hari`
+                                  : "Akses Selamanya"}
+                              </p>
+                            </motion.div>
+                          );
+                        })}
+                      </div>
+                    </section>
+                  ) : null}
                 </div>
               </AnimatedContent>
             </div>
@@ -410,27 +624,52 @@ const DetailCoursePage = ({ params }) => {
                   <div className="relative p-6 overflow-hidden border shadow-2xl bg-white/50 backdrop-blur-xl border-white/30 rounded-3xl">
                     <div className="absolute w-48 h-48 bg-green-400 rounded-full -top-16 -right-16 blur-3xl opacity-30"></div>
                     <div className="relative z-10">
-                      <div className="flex items-baseline gap-3 mb-5">
-                        <FaTag className="text-2xl text-blue-500" />
-                        <span className="text-4xl font-extrabold text-gray-800">
-                          Rp {Number(price)?.toLocaleString("id-ID")}
-                        </span>
-                      </div>
-                      <Link href={`/payment/${resolvedParams.slug}`} passHref>
-                        <motion.button
-                          className="w-full px-8 py-4 text-lg font-semibold text-white transition-all duration-300 rounded-xl bg-gradient-to-r from-green-400 to-blue-500 shadow-lg hover:shadow-blue-500/50"
-                          whileHover={{
-                            scale: 1.05,
-                            boxShadow: "0px 15px 25px rgba(37, 99, 235, 0.4)",
-                          }}
-                          whileTap={{ scale: 0.95 }}
-                        >
-                          <div className="flex items-center justify-center gap-3">
-                            <FaShoppingCart />
-                            <span>Beli Kursus Ini</span>
-                          </div>
-                        </motion.button>
-                      </Link>
+                      {courseData.has_access ? (
+                        <div className="mb-5">
+                          <span className="text-lg font-semibold text-green-600">Anda sudah terdaftar di kursus ini.</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-baseline gap-3 mb-5">
+                          <FaTag className="text-2xl text-blue-500" />
+                          <span className="text-4xl font-extrabold text-gray-800">
+                            Rp {Number(price)?.toLocaleString("id-ID")}
+                          </span>
+                        </div>
+                      )}
+
+                      {courseData.has_access ? (
+                        <Link href={`/materi/${courseData.slug}`} passHref>
+                          <motion.button
+                            className="w-full px-8 py-4 text-lg font-semibold text-white transition-all duration-300 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 shadow-lg hover:shadow-indigo-500/50"
+                            whileHover={{
+                              scale: 1.05,
+                              boxShadow: "0px 15px 25px rgba(99, 102, 241, 0.4)",
+                            }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            <div className="flex items-center justify-center gap-3">
+                              <FaPlayCircle />
+                              <span>Mulai Belajar</span>
+                            </div>
+                          </motion.button>
+                        </Link>
+                      ) : (
+                        <Link href={`/payment/${resolvedParams.slug}`} passHref>
+                          <motion.button
+                            className="w-full px-8 py-4 text-lg font-semibold text-white transition-all duration-300 rounded-xl bg-gradient-to-r from-green-400 to-blue-500 shadow-lg hover:shadow-blue-500/50"
+                            whileHover={{
+                              scale: 1.05,
+                              boxShadow: "0px 15px 25px rgba(37, 99, 235, 0.4)",
+                            }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            <div className="flex items-center justify-center gap-3">
+                              <FaShoppingCart />
+                              <span>Beli Kursus Ini</span>
+                            </div>
+                          </motion.button>
+                        </Link>
+                      )}
 
                       <ul className="mt-6 space-y-3 text-gray-700">
                         {[

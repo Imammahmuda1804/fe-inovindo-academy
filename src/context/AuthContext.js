@@ -13,15 +13,16 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true); // To know when initial user fetch is done
 
   const fetchAndSetUser = async () => {
-    const token = localStorage.getItem('token');
-    if (token) {
+    const accessToken = localStorage.getItem('access_token');
+    if (accessToken) {
       try {
         const userData = await getMe();
         setUser(userData);
         setIsLoggedIn(true);
       } catch (error) {
         console.error("Session expired or invalid", error);
-        localStorage.removeItem('token');
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
         setUser(null);
         setIsLoggedIn(false);
       }
@@ -39,7 +40,8 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error("Logout failed on server, clearing session locally.", error);
     } finally {
-      localStorage.removeItem('token');
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
       setUser(null);
       setIsLoggedIn(false);
     }

@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import apiService from "@/lib/apiService";
 import { motion, AnimatePresence, animate } from "framer-motion";
 import {
   FaUsers,
@@ -145,7 +146,10 @@ const itemVariants = {
 };
 
 // --- HALAMAN UTAMA ---
+const MIDTRANS_CLIENT_KEY = process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY;
+
 export default function PaymentPage() {
+  const router = useRouter();
   const [step, setStep] = useState(courseDetails.has_batches ? 2 : 3);
   const [selectedBatchId, setSelectedBatchId] = useState(null);
   const [selectedPlanId, setSelectedPlanId] = useState(null);
@@ -155,6 +159,19 @@ export default function PaymentPage() {
     totalAmount: 0,
   });
   const [isReadyToPay, setIsReadyToPay] = useState(false);
+
+  useEffect(() => {
+    // Load Midtrans Snap script
+    const script = document.createElement("script");
+    script.src = "https://app.sandbox.midtrans.com/snap/snap.js"; // Use sandbox for development
+    script.setAttribute("data-client-key", MIDTRANS_CLIENT_KEY);
+    script.async = true;
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
 
   const nextStep = () => setStep((prev) => prev + 1);
   const prevStep = () => setStep((prev) => prev - 1);
