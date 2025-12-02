@@ -5,7 +5,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import AnimatedContent from "@/components/animatedcontent.jsx";
-import { FaSearch, FaCode, FaPalette, FaBullhorn, FaChartBar, FaList } from "react-icons/fa";
+import { FaSearch, FaCode, FaPalette, FaBullhorn, FaChartBar, FaList, FaRegClock } from "react-icons/fa";
 import Sidebar from "@/components/Sidebar.jsx";
 import MyCoursesSkeleton from "@/components/MyCoursesSkeleton.jsx";
 import { getMyCourses } from "@/lib/apiService";
@@ -21,6 +21,8 @@ const CourseCard = ({ course }) => {
   const isExpired = course.access_expires_at
     ? new Date(course.access_expires_at) < today
     : false;
+  const isNotStarted = course.enrollment_type === 'batch' && course.batch_info?.start_date && new Date(course.batch_info.start_date) > today;
+
 
   const getProgressColor = (progress) => {
     if (progress === 100) return "bg-green-500";
@@ -28,15 +30,59 @@ const CourseCard = ({ course }) => {
     return "bg-gray-300";
   };
 
-  const mentor = course?.mentors?.length > 0 ? course.mentors[0].user : null;
+  const mentor = course?.mentors?.length > 0 ? course.mentors[0] : null;
   const mentorName = mentor ? mentor.name : "N/A";
   const mentorPhoto = ensureAbsoluteUrl(mentor?.photo) || "https://via.placeholder.com/32";
   const thumbnail = courseThumbnail(course);
 
+  let accessInfo = null;
+  let accessColor = "text-gray-600"; // Default color
+
+  if (isNotStarted) {
+    const startDate = new Date(course.batch_info.start_date);
+    const formattedStartDate = startDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+    accessInfo = `Batch akan dimulai pada ${formattedStartDate}`;
+    accessColor = "text-blue-600";
+  } else if (!isExpired) {
+    if (course.access_expires_at) {
+      const expirationDate = new Date(course.access_expires_at);
+      const todayOnlyDate = new Date();
+      todayOnlyDate.setHours(0, 0, 0, 0); // Reset time for accurate day comparison
+      expirationDate.setHours(0, 0, 0, 0);
+
+      const timeDiff = expirationDate.getTime() - todayOnlyDate.getTime();
+      const daysRemaining = Math.ceil(timeDiff / (1000 * 3600 * 24));
+
+      if (course.enrollment_type !== 'on_demand') { // Handle batch courses first
+          if (daysRemaining > 0) {
+              accessInfo = `Batch ini akan berakhir dalam ${daysRemaining} hari`;
+              accessColor = daysRemaining <= 15 ? "text-red-600" : "text-yellow-600";
+          } else if (daysRemaining === 0) {
+              accessInfo = `Batch ini akan berakhir hari ini`;
+              accessColor = "text-red-600";
+          }
+      } else { // Handle on_demand with expiration
+          if (daysRemaining > 15) {
+              accessInfo = `Sisa ${daysRemaining} hari`;
+              accessColor = "text-green-600";
+          } else if (daysRemaining > 0) {
+              accessInfo = `Sisa ${daysRemaining} hari`;
+              accessColor = "text-yellow-600";
+          } else if (daysRemaining === 0) {
+              accessInfo = `Akses berakhir hari ini`;
+              accessColor = "text-red-600";
+          }
+      }
+    } else { // No expiration date means permanent access
+      accessInfo = "Akses permanen";
+      accessColor = "text-green-700";
+    }
+  }
+
   return (
     <motion.div
-      className={`flex flex-col h-full overflow-hidden text-left duration-300 border bg-white shadow-lg border-gray-200/80 rounded-2xl group relative ${isExpired ? "opacity-60 cursor-not-allowed" : ""}`}
-      whileHover={!isExpired ? {
+      className={`flex flex-col h-full overflow-hidden text-left duration-300 border bg-white shadow-lg border-gray-200/80 rounded-2xl group relative ${isExpired || isNotStarted ? "opacity-60 cursor-not-allowed" : ""}`}
+      whileHover={!isExpired && !isNotStarted ? {
         y: -6,
         boxShadow: "0px 15px 25px rgba(0, 0, 0, 0.1)",
       } : {}}
@@ -46,8 +92,13 @@ const CourseCard = ({ course }) => {
           Telah Kedaluwarsa
         </div>
       )}
-      <div className={`${isExpired ? "opacity-60 pointer-events-none" : ""}`}>
-        <Link href={isExpired ? `/detail-course/${course.slug}` : `/materi/${course.slug}`} passHref>
+      {isNotStarted && (
+        <div className="absolute top-3 right-3 z-10 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+          Batch Belum Dimulai
+        </div>
+      )}
+      <div className={`${isExpired || isNotStarted ? "opacity-60 pointer-events-none" : ""}`}>
+        <Link href={isExpired || isNotStarted ? `/detail-course/${course.slug}` : `/materi/${course.slug}`} passHref>
           <div className="relative overflow-hidden w-full aspect-[16/9] cursor-pointer">
             <Image
               src={thumbnail}
@@ -59,13 +110,13 @@ const CourseCard = ({ course }) => {
         </Link>
 
         <div className="p-4 flex flex-col flex-grow">
-          <Link href={isExpired ? `/detail-course/${course.slug}` : `/materi/${course.slug}`} passHref>
+          <Link href={isExpired || isNotStarted ? `/detail-course/${course.slug}` : `/materi/${course.slug}`} passHref>
             <span className="text-xs font-semibold text-blue-600 bg-blue-100 px-2 py-1 rounded-full self-start mb-2 cursor-pointer">
               {course.category?.name || "Uncategorized"}
             </span>
           </Link>
 
-          <Link href={isExpired ? `/detail-course/${course.slug}` : `/materi/${course.slug}`} passHref>
+          <Link href={isExpired || isNotStarted ? `/detail-course/${course.slug}` : `/materi/${course.slug}`} passHref>
             <h2 className="text-lg font-bold text-gray-800 cursor-pointer">{course.name}</h2>
           </Link>
 
@@ -83,8 +134,8 @@ const CourseCard = ({ course }) => {
             <span className="text-gray-600 text-sm font-medium">{mentorName}</span>
           </div>
 
-          <div className="w-full mt-auto">
-            <div className="mb-3">
+          <div className="w-full mt-auto pt-4">
+            <div className="mb-2">
               <div className="flex justify-between items-center mb-1">
                 <p className="text-xs font-semibold text-gray-500">Progres</p>
                 <p className={`text-xs font-bold ${getProgressColor(course.progress_percentage).replace("bg-", "text-")}`}>
@@ -102,11 +153,23 @@ const CourseCard = ({ course }) => {
                 ></motion.div>
               </div>
             </div>
+            {accessInfo && (
+              <div className="flex items-center mt-2">
+                <FaRegClock className={`mr-1.5 ${accessColor}`} />
+                <p className={`text-xs font-semibold ${accessColor}`}>
+                  {accessInfo}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
       <div className="p-4 pt-0">
-        {isExpired ? (
+        {isNotStarted ? (
+          <div className="w-full mt-4 text-center">
+            {/* No button is rendered here, maybe a placeholder or nothing */}
+          </div>
+        ) : isExpired ? (
           course.enrollment_type === 'on_demand' ? (
             <Link href={`/payment/${course.slug}`} passHref>
               <motion.button
@@ -126,17 +189,31 @@ const CourseCard = ({ course }) => {
             </button>
           )
         ) : (
-          course.progress_percentage < 100 && (
-            <Link href={`/materi/${course.slug}`} passHref>
-              <motion.button
-                className="w-full mt-4 inline-flex items-center justify-center px-4 py-2.5 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                Lanjutkan Belajar
-              </motion.button>
-            </Link>
-          )
+          <div className="flex flex-col space-y-2 w-full mt-4">
+            {course.progress_percentage < 100 && (
+              <Link href={`/materi/${course.slug}`} passHref>
+                <motion.button
+                  className="w-full inline-flex items-center justify-center px-4 py-2.5 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  Lanjutkan Belajar
+                </motion.button>
+              </Link>
+            )}
+
+            {course.enrollment_type === 'on_demand' && (
+              <Link href={`/payment/${course.slug}`} passHref>
+                <motion.button
+                  className="w-full inline-flex items-center justify-center px-4 py-2.5 bg-white text-blue-600 border border-blue-600 font-semibold rounded-lg hover:bg-blue-50 transition-colors duration-300"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  Perpanjang Langganan
+                </motion.button>
+              </Link>
+            )}
+          </div>
         )}
       </div>
     </motion.div>
@@ -356,13 +433,12 @@ export default function MyCoursesPage() {
                       className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 isolate"
                     >
                       {currentCourses.map((course, index) => (
-                        <motion.div
-                          key={course.id}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.3, delay: index * 0.05 }}
-                        >
-                          <CourseCard course={course} />
+                                                  <motion.div
+                                                    key={course.enrollment_id}
+                                                    initial={{ opacity: 0, y: 20 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                                                  >                          <CourseCard course={course} />
                         </motion.div>
                       ))}
                     </div>

@@ -9,26 +9,26 @@ const api = axios.create({
   },
 });
 
-let isRefreshing = false;
-let failedQueue = [];
 
-const processQueue = (error, token = null) => {
-  failedQueue.forEach(prom => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token);
-    }
-  });
-  failedQueue = [];
+
+let isRefreshing = false;
+let subscribers = [];
+
+const addSubscriber = (executor) => {
+  subscribers.push(executor);
 };
 
-// 🧩 Interceptor: Tambahkan token Sanctum otomatis jika tersedia
+const onRefreshFinished = (token, error) => {
+  subscribers.forEach((executor) => executor(token, error));
+};
+
+// 🧩 Interceptor: Tambahkan token Sanctum otomatis jika tersedia, kecuali untuk endpoint refresh
 api.interceptors.request.use(
   (config) => {
     if (typeof window !== "undefined") {
       const accessToken = localStorage.getItem("access_token");
-      if (accessToken) {
+      // Jangan tambahkan token jika ini adalah permintaan untuk refresh token
+      if (accessToken && !config.url.includes('/refresh')) {
         config.headers.Authorization = `Bearer ${accessToken}`;
       }
     }
@@ -37,54 +37,46 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// 🧱 (Opsional) Interceptor respons: handle token refresh dan logout otomatis jika token invalid
+// 🧱 Interceptor respons: handle token refresh menggunakan pola subscriber yang lengkap
 api.interceptors.response.use(
   (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
+  (error) => {
+    const { config, response } = error;
+    const originalRequest = config;
 
-    // Check if it's a 401 and not a refresh token request itself
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      if (isRefreshing) {
-        // If a token refresh is already in progress, queue the failed request
-        return new Promise(function(resolve, reject) {
-          failedQueue.push({ resolve, reject });
-        })
-        .then(token => {
-          originalRequest.headers.Authorization = `Bearer ${token}`;
-          return api(originalRequest);
-        })
-        .catch(err => {
-          return Promise.reject(err);
-        });
+    if (response && response.status === 401) {
+      if (!isRefreshing) {
+        isRefreshing = true;
+        refreshToken()
+          .then((newAccessToken) => {
+            onRefreshFinished(newAccessToken, null);
+          })
+          .catch((err) => {
+            onRefreshFinished(null, err);
+            console.error("Refresh token failed, logging out.", err);
+            localStorage.removeItem("access_token");
+            localStorage.removeItem("refresh_token");
+            if (typeof window !== "undefined") {
+              window.dispatchEvent(new Event("auth-failure"));
+            }
+          })
+          .finally(() => {
+            isRefreshing = false;
+            subscribers = [];
+          });
       }
 
-      originalRequest._retry = true; // Mark request as retried
-      isRefreshing = true;
-
-      return new Promise(async (resolve, reject) => {
-        try {
-          const newAccessToken = await refreshToken(); // Call the refresh token function
-          api.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`; // Update default header
-          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`; // Update original request header
-          processQueue(null, newAccessToken); // Process queued requests
-          resolve(api(originalRequest)); // Retry the original request
-        } catch (refreshError) {
-          processQueue(refreshError, null); // Clear queue with error
-          // Clear tokens and redirect on refresh failure
-          localStorage.removeItem("access_token");
-          localStorage.removeItem("refresh_token");
-          if (typeof window !== "undefined") {
-            window.location.href = "/login";
+      return new Promise((resolve, reject) => {
+        addSubscriber((token, err) => {
+          if (err) {
+            return reject(err);
           }
-          reject(refreshError);
-        } finally {
-          isRefreshing = false;
-        }
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          resolve(api(originalRequest));
+        });
       });
     }
 
-    // If it's not a 401 or _retry is already true, just reject the promise
     return Promise.reject(error);
   }
 );
@@ -233,7 +225,7 @@ export const getMateriBySlug = async (slug) => {
     return response.data;
   } catch (error) {
     console.error(`Error fetching materi ${slug}:`, error);
-    return null;
+    throw error;
   }
 };
 
@@ -355,9 +347,8 @@ export const createTransaction = async (payload: any) => {
 };
 
 // --- Content Completion Endpoints ---
-export const markContentAsComplete = (courseId: number, contentId: number) => 
-  api.post(`/courses/${courseId}/contents/${contentId}/complete`);
-
+export const markContentAsComplete = (courseId: number, contentId: number, batchId: string) =>
+  api.post(`/courses/${courseId}/contents/${contentId}/complete`, { batch_id: batchId });
 export const markContentAsIncomplete = (courseId: number, contentId: number) =>
   api.delete(`/courses/${courseId}/contents/${contentId}/complete`);
 

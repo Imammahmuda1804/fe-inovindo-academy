@@ -10,10 +10,11 @@ const ProtectedRoute = ({ children }) => {
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading && !isLoggedIn) {
-      router.push('/login');
+    // Use window.location.replace for a more robust redirect, especially on initial load.
+    if (typeof window !== 'undefined' && !isLoading && !isLoggedIn) {
+      window.location.replace('/login');
     }
-  }, [isLoggedIn, isLoading, router]);
+  }, [isLoggedIn, isLoading]);
 
   if (isLoading) {
     // Show a loader while the auth state is being determined
@@ -26,8 +27,8 @@ const ProtectedRoute = ({ children }) => {
   }
 
   // If the user is not logged in, they will be redirected by the useEffect.
-  // You can return a loader or null here to prevent a flash of content.
-  return <div className="flex justify-center items-center h-screen"><Loader /></div>;
+  // Returning null prevents a flash of content or a misleading loader.
+  return null;
 };
 
 export default ProtectedRoute;

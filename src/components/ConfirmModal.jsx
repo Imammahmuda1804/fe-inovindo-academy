@@ -44,9 +44,11 @@ export default function ConfirmModal({
   children, 
   isLoading, 
   confirmText = "Konfirmasi", 
+  cancelText = "Batal",
   hideCancelButton = false,
   variant = 'danger'
 }) {
+  const selectedVariant = variants[variant] || variants.danger;
   const {
     icon: Icon,
     iconBgClass,
@@ -54,7 +56,7 @@ export default function ConfirmModal({
     buttonBgClass,
     buttonHoverBgClass,
     buttonFocusRingClass,
-  } = variants[variant];
+  } = selectedVariant;
 
   if (!isOpen) return null;
 
@@ -105,7 +107,7 @@ export default function ConfirmModal({
                   className="inline-flex justify-center w-full px-4 py-2 mt-3 text-base font-semibold text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm disabled:cursor-not-allowed"
                   onClick={onClose}
                 >
-                  Batal
+                  {cancelText}
                 </button>
               )}
             </div>

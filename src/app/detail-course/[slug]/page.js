@@ -107,12 +107,7 @@ const DetailCoursePage = ({ params }) => {
       0
     ) || 0;
 
-  const availableBatches =
-    courseData?.batches?.filter(
-      (b) => b.is_available && b.pricing
-    ) || [];
-
-  // Determine price from selected batch or pricing option
+  // Tentukan harga dari batch atau opsi harga yang dipilih
   const selectedBatch =
     courseData?.batches?.find((b) => b.id === selectedBatchId) || null;
   const selectedPricing =
@@ -456,35 +451,50 @@ const DetailCoursePage = ({ params }) => {
 
                   <hr className="border-gray-200" />
 
-                  {availableBatches.length > 0 ? (
+                  {courseData?.batches?.length > 0 ? (
                     <section id="batch-selection">
                       <h2 className="text-3xl font-bold text-gray-800 mb-6">
                         Pilih Batch
                       </h2>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {availableBatches.map((batch) => {
+                        {courseData.batches.map((batch) => {
                           const isSelected = batch.id === selectedBatchId;
                           const isFull = batch.quota <= batch.student_count;
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          const isExpired = new Date(batch.start_date) < today;
+                          const isUnavailable = !batch.is_available || !batch.pricing;
+
                           const filledPercentage =
                             (batch.student_count / batch.quota) * 100;
+                          
+                          let statusLabel = null;
+                          if (isExpired) {
+                            statusLabel = 'Ditutup';
+                          } else if (isFull) {
+                            statusLabel = 'Penuh';
+                          } else if (isUnavailable) {
+                            statusLabel = 'Tidak Tersedia';
+                          }
+
 
                           return (
                             <motion.div
                               key={batch.id}
                               onClick={() =>
-                                !isFull && setSelectedBatchId(batch.id)
+                                !isFull && !batch.terdaftar && !isExpired && !isUnavailable && setSelectedBatchId(batch.id)
                               }
                               className={`relative p-5 rounded-2xl cursor-pointer transition-all duration-300 border-2 ${
                                 isSelected
                                   ? "border-blue-500 bg-blue-50/50 scale-105 shadow-xl"
                                   : "border-gray-200 bg-white hover:border-blue-400"
                               } ${
-                                isFull
+                                isFull || batch.terdaftar || isExpired || isUnavailable
                                   ? "cursor-not-allowed bg-gray-100 opacity-70"
                                   : ""
                               }`}
                               whileHover={{
-                                scale: isSelected || isFull ? 1.05 : 1.02,
+                                scale: isSelected || isFull || batch.terdaftar || isExpired || isUnavailable ? 1.05 : 1.02,
                               }}
                             >
                               {isSelected && (
@@ -492,14 +502,19 @@ const DetailCoursePage = ({ params }) => {
                                   <FaCheckCircle size={16} />
                                 </div>
                               )}
+                              {batch.terdaftar && (
+                                <div className="absolute top-[0.125rem] left-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                                  Terdaftar
+                                </div>
+                              )}
 
                               <div className="flex justify-between items-start mb-2">
                                 <h4 className="text-xl font-bold text-gray-800">
                                   {batch.name}
                                 </h4>
-                                {isFull && (
-                                  <span className="text-sm font-semibold py-1 px-3 rounded-full bg-red-100 text-red-700">
-                                    Penuh
+                                {statusLabel && (
+                                  <span className={`text-sm font-semibold py-1 px-3 rounded-full ${statusLabel === 'Penuh' ? 'bg-red-100 text-red-700' : 'bg-gray-200 text-gray-700'}`}>
+                                    {statusLabel}
                                   </span>
                                 )}
                               </div>
@@ -530,12 +545,12 @@ const DetailCoursePage = ({ params }) => {
 
                               <div className="text-2xl font-bold text-blue-600 mb-4">
                                 Rp{" "}
-                                {Number(batch.pricing.price).toLocaleString(
+                                {Number(batch.pricing?.price || 0).toLocaleString(
                                   "id-ID"
                                 )}
                               </div>
 
-                              {!isFull && (
+                              {!isFull && !isExpired && !isUnavailable &&(
                                 <div>
                                   <div className="w-full bg-gray-200 rounded-full h-2.5 mb-1">
                                     <motion.div
@@ -638,21 +653,41 @@ const DetailCoursePage = ({ params }) => {
                       )}
 
                       {courseData.has_access ? (
-                        <Link href={`/materi/${courseData.slug}`} passHref>
-                          <motion.button
-                            className="w-full px-8 py-4 text-lg font-semibold text-white transition-all duration-300 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 shadow-lg hover:shadow-indigo-500/50"
-                            whileHover={{
-                              scale: 1.05,
-                              boxShadow: "0px 15px 25px rgba(99, 102, 241, 0.4)",
-                            }}
-                            whileTap={{ scale: 0.95 }}
-                          >
-                            <div className="flex items-center justify-center gap-3">
-                              <FaPlayCircle />
-                              <span>Mulai Belajar</span>
-                            </div>
-                          </motion.button>
-                        </Link>
+                        <div className="space-y-4">
+                          <Link href={`/materi/${courseData.slug}`} passHref>
+                            <motion.button
+                              className="w-full px-8 py-4 text-lg font-semibold text-white transition-all duration-300 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 shadow-lg hover:shadow-indigo-500/50"
+                              whileHover={{
+                                scale: 1.05,
+                                boxShadow:
+                                  "0px 15px 25px rgba(99, 102, 241, 0.4)",
+                              }}
+                              whileTap={{ scale: 0.95 }}
+                            >
+                              <div className="flex items-center justify-center gap-3">
+                                <FaPlayCircle />
+                                <span>Mulai Belajar</span>
+                              </div>
+                            </motion.button>
+                          </Link>
+                          <div className="text-center">
+                            <p className="text-sm text-gray-600 mb-2">
+                              Atau ingin membeli akses lagi?
+                            </p>
+                            <Link href={`/payment/${resolvedParams.slug}`} passHref>
+                              <motion.button
+                                className="w-full px-6 py-3 text-base font-semibold text-blue-600 transition-all duration-300 bg-white border-2 border-blue-500 rounded-xl hover:bg-blue-50"
+                                whileHover={{ scale: 1.03 }}
+                                whileTap={{ scale: 0.98 }}
+                              >
+                                <div className="flex items-center justify-center gap-3">
+                                  <FaShoppingCart />
+                                  <span>Beli Batch/Paket Lain</span>
+                                </div>
+                              </motion.button>
+                            </Link>
+                          </div>
+                        </div>
                       ) : (
                         <Link href={`/payment/${resolvedParams.slug}`} passHref>
                           <motion.button

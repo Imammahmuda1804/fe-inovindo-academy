@@ -285,28 +285,39 @@ export default function PaymentPage({ params }) {
                     <FaCalendarAlt className="h-6 w-6 text-teal-500" /> Pilih Batch Tersedia
                   </h2>
                   <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {batchOptions.map((batch) => {
+                    {batchOptions
+                      .map((batch) => {
                       const isFull = batch.status?.trim().toLowerCase() === "penuh" || Number(batch.students_count) >= Number(batch.quota);
                       const filledPercentage = (Number(batch.students_count || 0) / Number(batch.quota || 1)) * 100;
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const isExpired = new Date(batch.start_date) < today;
+                      const isRegistered = !!batch.terdaftar;
+
                       return (
                         <motion.div
                           key={batch.id}
                           className={`relative p-5 border-2 rounded-2xl transition-all h-full flex flex-col ${
-                            isFull ? "bg-gray-100/80 border-gray-200 text-gray-500 cursor-not-allowed" : "cursor-pointer bg-white/60 hover:border-blue-400"
+                            isFull || isExpired || isRegistered ? "bg-gray-100/80 border-gray-200 text-gray-500 cursor-not-allowed" : "cursor-pointer bg-white/60 hover:border-blue-400"
                           } ${selectedBatchId === batch.id ? "border-blue-500 bg-blue-50/80 shadow-xl" : ""}`}
-                          whileHover={{ scale: isFull ? 1 : 1.03 }}
-                          onClick={() => !isFull && setSelectedBatchId(batch.id)}
+                          whileHover={{ scale: isFull || isExpired || isRegistered ? 1 : 1.03 }}
+                          onClick={() => !isFull && !isExpired && !isRegistered && setSelectedBatchId(batch.id)}
                         >
                           {selectedBatchId === batch.id && (
                             <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute top-3 right-3 text-blue-500">
                               <FaCheckCircle size={20}/>
                             </motion.div>
                           )}
+                           {isRegistered && (
+                                <div className="absolute top-2 left-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                                  Terdaftar
+                                </div>
+                              )}
                           <div className="flex justify-between items-start mb-2">
                             <h4 className="font-bold text-lg text-gray-800 pr-4">{batch.name}</h4>
-                            <div className={`flex items-center gap-2 text-xs font-semibold py-1 px-2.5 rounded-full ${isFull ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>
-                              <div className={`w-2 h-2 rounded-full ${isFull ? "bg-red-500" : "bg-green-500"}`}></div>
-                              {isFull ? 'Penuh' : batch.status}
+                            <div className={`flex items-center gap-2 text-xs font-semibold py-1 px-2.5 rounded-full ${isFull ? "bg-red-100 text-red-700" : isExpired ? "bg-gray-200 text-gray-700" : "bg-green-100 text-green-700"}`}>
+                              <div className={`w-2 h-2 rounded-full ${isFull ? "bg-red-500" : isExpired ? "bg-gray-500" : "bg-green-500"}`}></div>
+                              {isFull ? 'Penuh' : isExpired ? 'Ditutup' : batch.status}
                             </div>
                           </div>
                           <p className="text-sm text-gray-500 mb-1 flex items-center gap-2"><FaUserCircle />{batch.mentor?.name || 'N/A'}</p>
@@ -316,7 +327,7 @@ export default function PaymentPage({ params }) {
                             <div className="text-2xl font-bold text-blue-600 mb-4">
                               {formatRupiah(batch.pricing?.price || 0)}
                             </div>
-                            {!isFull && (
+                            {!(isFull || isExpired || isRegistered) && (
                               <div>
                                 <div className="w-full bg-gray-200 rounded-full h-2.5 mb-1">
                                   <motion.div className={`h-2.5 rounded-full ${filledPercentage > 80 ? "bg-red-500" : "bg-blue-500"}`} style={{ width: `${filledPercentage}%` }}></motion.div>

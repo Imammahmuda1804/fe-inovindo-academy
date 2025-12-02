@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   FaSearch,
   FaCode,
@@ -20,27 +20,41 @@ import ensureAbsoluteUrl from "@/lib/urlHelpers";
 import "./courses.css";
 
 const CourseCard = ({ course }) => {
+  const router = useRouter();
   const instructor = course.mentors?.[0]?.user;
   const instructorImage = instructor?.photo
     ? ensureAbsoluteUrl(instructor.photo)
     : "/assets/images/default-avatar.png";
 
-  // displayPrice no longer needed as course.price is already formatted by server component
-  // const displayPrice = course.price !== null && typeof course.price !== 'undefined'
-  //                      ? course.price
-  //                      : null;
+  const hasAccess = !!course.has_access;
 
-  const hasAccess = course.has_access === true;
-  const courseLink = hasAccess ? `/materi/${course.slug}` : `/detail-course/${course.slug}`;
+  const handleCardClick = () => {
+    router.push(`/detail-course/${course.slug}`);
+  };
+
+  const formatCurrency = (amount) => {
+    if (typeof amount !== 'number' || amount < 0) return '';
+    if (amount === 0) return 'Gratis';
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  const displayPrice = formatCurrency(course.price);
 
   return (
-    <Link href={courseLink} passHref>
-      <motion.div
-        className="flex flex-col h-full overflow-hidden text-left duration-300 bg-white border border-gray-200 shadow-lg cursor-pointer rounded-2xl group"
-        whileHover={{
-          y: -5,
-          boxShadow: "0px 15px 25px rgba(0, 0, 0, 0.07)",
-        }}
+    <motion.div
+      className="flex flex-col h-full overflow-hidden text-left duration-300 bg-white border border-gray-200 shadow-lg rounded-2xl group"
+      whileHover={{
+        y: -5,
+        boxShadow: "0px 15px 25px rgba(0, 0, 0, 0.07)",
+      }}
+    >
+      <div
+        onClick={handleCardClick}
+        className="cursor-pointer flex flex-col flex-grow"
       >
         <div className="relative overflow-hidden w-full aspect-[16/9]">
           <Image
@@ -50,7 +64,7 @@ const CourseCard = ({ course }) => {
             className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
           {hasAccess && (
-             <div className="absolute top-2 right-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+            <div className="absolute top-2 right-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full">
               Terdaftar
             </div>
           )}
@@ -59,7 +73,9 @@ const CourseCard = ({ course }) => {
           <span className="text-xs font-semibold text-blue-600 bg-blue-100 px-2 py-1 rounded-full self-start mb-2">
             {course.category?.name || "Uncategorized"}
           </span>
-          <h2 className="text-lg font-bold text-gray-800">{course.name}</h2>
+          <h2 className="text-lg font-bold text-gray-800 flex-grow">
+            {course.name}
+          </h2>
 
           {instructor && (
             <div className="flex items-center mt-3">
@@ -77,26 +93,33 @@ const CourseCard = ({ course }) => {
               </span>
             </div>
           )}
-
-          <div className="flex justify-end items-center mt-auto">
-            {hasAccess ? (
-               <button className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg shadow-md hover:bg-blue-700">
+        </div>
+      </div>
+      <div className="p-4 pt-0">
+        <div className="flex justify-end items-center">
+          {hasAccess ? (
+            <Link
+              href={`/materi/${course.slug}`}
+              passHref
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg shadow-md hover:bg-blue-700">
                 Mulai Belajar
               </button>
-            ) : course.price === "Gratis" ? (
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
-                {course.price}
-              </span>
-            ) : (
-              <span className="inline-flex items-center px-3 py-1 rounded-md text-sm font-semibold bg-gray-100 text-gray-800">
-                <FaTag className="mr-2 text-blue-500" />
-                {course.price}
-              </span>
-            )}
-          </div>
+            </Link>
+          ) : displayPrice === "Gratis" ? (
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
+              {displayPrice}
+            </span>
+          ) : (
+            <span className="inline-flex items-center px-3 py-1 rounded-md text-sm font-semibold bg-gray-100 text-gray-800">
+              <FaTag className="mr-2 text-blue-500" />
+              {displayPrice}
+            </span>
+          )}
         </div>
-      </motion.div>
-    </Link>
+      </div>
+    </motion.div>
   );
 };
 const Pagination = ({
@@ -143,6 +166,8 @@ const Sidebar = ({
   setFilterCategory,
   sortOrder,
   setSortOrder,
+  filterPrice,
+  setFilterPrice,
 }) => (
   <aside className="w-full lg:w-1/4 xl:w-1/5">
     <div className="p-6 bg-white rounded-2xl shadow-md space-y-6">
@@ -175,6 +200,81 @@ const Sidebar = ({
               className="appearance-none h-4 w-4 border border-gray-400 rounded-none bg-white checked:bg-[radial-gradient(circle,_theme(colors.blue.600)_40%,_transparent_45%)] focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <span>Terlama</span>
+          </label>
+          <label className="flex items-center space-x-3 cursor-pointer text-gray-700 hover:text-blue-600 transition-colors">
+            <input
+              type="checkbox"
+              value="harga-termahal"
+              checked={sortOrder === "harga-termahal"}
+              onChange={(e) => {
+                const { value } = e.target;
+                setSortOrder(prev => prev === value ? null : value);
+              }}
+              className="appearance-none h-4 w-4 border border-gray-400 rounded-none bg-white checked:bg-[radial-gradient(circle,_theme(colors.blue.600)_40%,_transparent_45%)] focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <span>Harga Termahal</span>
+          </label>
+          <label className="flex items-center space-x-3 cursor-pointer text-gray-700 hover:text-blue-600 transition-colors">
+            <input
+              type="checkbox"
+              value="harga-termurah"
+              checked={sortOrder === "harga-termurah"}
+              onChange={(e) => {
+                const { value } = e.target;
+                setSortOrder(prev => prev === value ? null : value);
+              }}
+              className="appearance-none h-4 w-4 border border-gray-400 rounded-none bg-white checked:bg-[radial-gradient(circle,_theme(colors.blue.600)_40%,_transparent_45%)] focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <span>Harga Termurah</span>
+          </label>
+        </div>
+      </div>
+
+      {/* Price Filter */}
+      <div>
+        <h3 className="font-bold text-lg text-gray-800 mb-4">Harga</h3>
+        <div className="space-y-3">
+          <label className="flex items-center space-x-3 cursor-pointer text-gray-700 hover:text-blue-600 transition-colors">
+            <input
+              type="radio"
+              name="price"
+              value="all"
+              checked={filterPrice === 'all'}
+              onChange={(e) => {
+                setFilterPrice(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+            />
+            <span>Semua</span>
+          </label>
+          <label className="flex items-center space-x-3 cursor-pointer text-gray-700 hover:text-blue-600 transition-colors">
+            <input
+              type="radio"
+              name="price"
+              value="paid"
+              checked={filterPrice === 'paid'}
+              onChange={(e) => {
+                setFilterPrice(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+            />
+            <span>Berbayar</span>
+          </label>
+          <label className="flex items-center space-x-3 cursor-pointer text-gray-700 hover:text-blue-600 transition-colors">
+            <input
+              type="radio"
+              name="price"
+              value="free"
+              checked={filterPrice === 'free'}
+              onChange={(e) => {
+                setFilterPrice(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+            />
+            <span>Gratis</span>
           </label>
         </div>
       </div>
@@ -269,30 +369,63 @@ const FilterButton = ({
   </button>
 );
 
+import { getCourses } from "@/lib/apiService";
+import { useAuth } from "@/context/AuthContext";
+
 export default function CoursesPageClient({ initialCourses, initialCategories }) {
   const searchParams = useSearchParams();
-  const [isLoading, setIsLoading] = useState(false); // No initial loading
+  const auth = useAuth();
+
+  const [isLoading, setIsLoading] = useState(true);
   const [allCourses, setAllCourses] = useState(initialCourses);
-  const [filteredCourses, setFilteredCourses] = useState(initialCourses);
-  const [featuredCourses, setFeaturedCourses] = useState(initialCourses.slice(0, 3));
+  const [filteredCourses, setFilteredCourses] = useState([]);
+  const [featuredCourses, setFeaturedCourses] = useState([]);
   const [allCategories, setAllCategories] = useState(initialCategories);
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
   const [filterCategory, setFilterCategory] = useState("All");
   const [filterYear, setFilterYear] = useState([]);
-  const [sortOrder, setSortOrder] = useState(null); // State for sorting
+  const [sortOrder, setSortOrder] = useState(null);
+  const [filterPrice, setFilterPrice] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [activeIndex, setActiveIndex] = useState(0);
   const coursesPerPage = 8;
 
-  // Effect to reset state when server-provided props change
+  // Effect for fetching and setting initial data based on auth state
   useEffect(() => {
-    setAllCourses(initialCourses);
-    setFilteredCourses(initialCourses);
-    setFeaturedCourses(initialCourses.slice(0, 3));
-    setIsLoading(false);
-  }, [initialCourses]);
+    function formatCurrency(amount) {
+      if (typeof amount !== 'number' || amount < 0) return '';
+      if (amount === 0) return 'Gratis';
+      return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0,
+      }).format(amount);
+    }
 
-  // Client-side filtering and sorting logic
+    const fetchOrSetCourses = async () => {
+      if (auth.isLoading) return; // Wait until auth check is complete
+
+      try {
+        let coursesData = initialCourses;
+        if (auth.isLoggedIn) {
+          // Fetch personalized data if logged in
+          coursesData = await getCourses({});
+        }
+        
+        setAllCourses(coursesData);
+
+      } catch (error) {
+        console.error("Failed to fetch courses, falling back to initial data.", error);
+        setAllCourses(initialCourses); // Fallback on error
+      } finally {
+        setIsLoading(false); // Signal that loading is complete
+      }
+    };
+
+    fetchOrSetCourses();
+  }, [auth.isLoading, auth.isLoggedIn, initialCourses]);
+
+  // Effect for filtering and sorting, runs only when data or filters change
   useEffect(() => {
     let filtered = allCourses;
 
@@ -314,17 +447,28 @@ export default function CoursesPageClient({ initialCourses, initialCategories })
       );
     }
 
-    // Sorting logic
-    const sorted = [...filtered]; // Create a new array to avoid mutating state directly
+    if (filterPrice === 'paid') {
+      filtered = filtered.filter(course => course.price > 0);
+    } else if (filterPrice === 'free') {
+      filtered = filtered.filter(course => course.price === 0);
+    }
+
+    const sorted = [...filtered];
     if (sortOrder === "terbaru") {
       sorted.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     } else if (sortOrder === "terlama") {
       sorted.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    } else if (sortOrder === 'harga-termahal') {
+      sorted.sort((a, b) => b.price - a.price);
+    } else if (sortOrder === 'harga-termurah') {
+      sorted.sort((a, b) => a.price - b.price);
     }
 
     setFilteredCourses(sorted);
-    setCurrentPage(1); // Reset to first page on filter change
-  }, [searchTerm, filterCategory, filterYear, allCourses, sortOrder]);
+    setFeaturedCourses(sorted.slice(0, 3));
+    setCurrentPage(1);
+  }, [searchTerm, filterCategory, filterYear, allCourses, sortOrder, filterPrice]);
+
 
   const activeCourse = featuredCourses[activeIndex];
   const inactiveCourses = featuredCourses.filter((_, i) => i !== activeIndex);
@@ -364,7 +508,38 @@ export default function CoursesPageClient({ initialCourses, initialCategories })
     }
   };
 
-
+  if (isLoading) {
+    return (
+       <main className="bg-gray-50 pt-28 pb-16 px-4 sm:px-6 lg:px-8">
+         <div className="text-center mb-12">
+            <div className="h-12 bg-gray-200 rounded-lg w-1/2 mx-auto animate-pulse"></div>
+            <div className="h-6 bg-gray-200 rounded-lg w-3/4 mx-auto mt-4 animate-pulse"></div>
+         </div>
+         <div className="flex flex-col lg:flex-row gap-8 xl:gap-12">
+            <div className="w-full lg:w-1/4 xl:w-1/5">
+                <div className="p-6 bg-white rounded-2xl shadow-md space-y-6 animate-pulse">
+                    <div className="h-8 bg-gray-200 rounded-lg w-3/4"></div>
+                    <div className="space-y-3">
+                        <div className="h-6 bg-gray-200 rounded-lg"></div>
+                        <div className="h-6 bg-gray-200 rounded-lg"></div>
+                    </div>
+                </div>
+            </div>
+            <div className="w-full lg:flex-1">
+                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {[...Array(6)].map((_, i) => (
+                      <div key={i} className="bg-white rounded-2xl shadow-lg p-5 animate-pulse">
+                        <div className="h-44 bg-gray-200 rounded-lg mb-4"></div>
+                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                      </div>
+                    ))}
+                  </div>
+            </div>
+         </div>
+       </main>
+     );
+  }
 
   return (
     <main className="bg-gray-50 pt-28 pb-16 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
@@ -492,6 +667,8 @@ export default function CoursesPageClient({ initialCourses, initialCategories })
             setFilterCategory={setFilterCategory}
             sortOrder={sortOrder}
             setSortOrder={setSortOrder}
+            filterPrice={filterPrice}
+            setFilterPrice={setFilterPrice}
           />
 
           <div className="w-full lg:flex-1">
@@ -568,3 +745,4 @@ export default function CoursesPageClient({ initialCourses, initialCategories })
     </main>
   );
 }
+

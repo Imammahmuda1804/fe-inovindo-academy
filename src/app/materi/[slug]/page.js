@@ -8,6 +8,7 @@ import AnimatedContent from "@/components/animatedcontent.jsx";
 import SplitText from "@/components/splittext.jsx";
 import CountUp from "@/components/countup.jsx";
 import MateriSkeleton from "@/components/MateriSkeleton.jsx";
+import ConfirmModal from "@/components/ConfirmModal.jsx";
 import {
   getMateriBySlug,
   createQuizAttempt,
@@ -48,6 +49,10 @@ export default function MateriPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalContent, setModalContent] = useState(null);
   const [isFinishing, setIsFinishing] = useState(false);
+  const [showExpiredModal, setShowExpiredModal] = useState(false);
+  const [isLockedByStartDate, setIsLockedByStartDate] = useState(false);
+  const [batchStartDate, setBatchStartDate] = useState(null);
+  const [infoModal, setInfoModal] = useState({ isOpen: false, title: '', children: '', variant: 'info' });
 
 
   const mainContentRef = useRef(null);
@@ -60,17 +65,40 @@ export default function MateriPage() {
 
       try {
         const response = await getMateriBySlug(slug);
+
+        // --- Start Debugging ---
+        console.log("Full API Response:", JSON.stringify(response, null, 2));
+        if (response) {
+          console.log("Response Message:", response.message);
+          console.log("Message Lowercased:", response.message?.toLowerCase());
+          const comparisonString = "akses anda ke kursus ini telah kadaluarsa.";
+          console.log("Comparison String:", comparisonString);
+          const isMatch = response.message?.toLowerCase() === comparisonString;
+          console.log("Is it a match?", isMatch);
+        }
+        // --- End Debugging ---
+
         if (response && response.status === "success") {
-          const sortedSections = response.data.sections
+          const rawCourseData = response.data;
+          const activeBatchId = rawCourseData.active_batch_id;
+
+          const validatedSections = rawCourseData.sections
             .slice()
             .sort((a, b) => a.position - b.position)
             .map(section => ({
-              ...section,
-              contents: section.contents.slice().sort((a, b) => a.position - b.position)
+                ...section,
+                contents: section.contents
+                    .slice()
+                    .sort((a, b) => a.position - b.position)
+                    .map(content => {
+                        const relevantProgress = content.course_progress?.find(p => p.course_batch_id === activeBatchId);
+                        const isTrulyCompleted = !!(relevantProgress && relevantProgress.is_completed);
+                        return { ...content, is_completed: isTrulyCompleted };
+                    })
             }));
-          
-          const sortedCourseData = { ...response.data, sections: sortedSections };
-          setCourseData(sortedCourseData);
+        
+          const validatedCourseData = { ...rawCourseData, sections: validatedSections };
+          setCourseData(validatedCourseData);
 
           const myCourses = await getMyCourses();
           const currentCourseEnrollment = myCourses.find(
@@ -79,11 +107,25 @@ export default function MateriPage() {
 
           if (currentCourseEnrollment) {
             setEnrollmentData(currentCourseEnrollment);
+
+            // Cek jika kursus batch belum dimulai
+            if (currentCourseEnrollment.batch_info && currentCourseEnrollment.batch_info.start_date) {
+              const startDate = new Date(currentCourseEnrollment.batch_info.start_date);
+              const now = new Date();
+              now.setHours(0, 0, 0, 0); // Bandingkan hanya tanggal, bukan waktu
+
+              if (startDate > now) {
+                setIsLockedByStartDate(true);
+                setBatchStartDate(startDate);
+                if (isInitialLoad) setIsLoading(false); // Matikan skeleton loading
+                return; // Hentikan eksekusi lebih lanjut
+              }
+            }
           }
 
           let contentToSet = null;
           if (currentContentId) {
-            for (const section of sortedCourseData.sections) {
+            for (const section of validatedCourseData.sections) {
               const foundContent = section.contents.find(
                 (c) => c.id === currentContentId
               );
@@ -93,10 +135,10 @@ export default function MateriPage() {
               }
             }
           } else if (
-            sortedCourseData.sections &&
-            sortedCourseData.sections.length > 0
+            validatedCourseData.sections &&
+            validatedCourseData.sections.length > 0
           ) {
-            const firstSection = sortedCourseData.sections[0];
+            const firstSection = validatedCourseData.sections[0];
             setOpenSections((prev) => ({ ...prev, [firstSection.id]: true }));
             if (firstSection.contents && firstSection.contents.length > 0) {
               contentToSet = firstSection.contents[0];
@@ -109,10 +151,9 @@ export default function MateriPage() {
           }
         } else if (
           response &&
-          response.message === "akses anda ke kursus ini telah kadaluarsa"
+          response.message?.toLowerCase() === "akses anda ke kursus ini telah kadaluarsa"
         ) {
-          alert("Akses Anda ke kursus ini telah kedaluwarsa.");
-          router.push("/my-courses");
+          setShowExpiredModal(true);
         } else {
           console.error(
             "Failed to fetch course data:",
@@ -121,9 +162,9 @@ export default function MateriPage() {
           alert("Gagal memuat data materi.");
         }
       } catch (error) {
-        if (error.message === "akses anda ke kursus ini telah kadaluarsa") {
-          alert("Akses Anda ke kursus ini telah kedaluwarsa.");
-          router.push("/my-courses");
+        const errorMessage = error.response?.data?.message || error.message;
+        if (errorMessage?.toLowerCase().includes("akses anda ke kursus ini telah")) {
+          setShowExpiredModal(true);
         } else {
           console.error("Error fetching course data:", error);
           alert(
@@ -178,11 +219,16 @@ export default function MateriPage() {
 
   const handleContentClick = (content, isLocked) => {
     if (isLocked) {
-      alert("Selesaikan materi sebelumnya terlebih dahulu.");
+      setInfoModal({ 
+        isOpen: true, 
+        title: 'Materi Terkunci', 
+        children: 'Selesaikan materi sebelumnya terlebih dahulu untuk membuka materi ini.', 
+        variant: 'danger' 
+      });
       return;
     }
     setCurrentContent(content);
-    setCurrentContentId(content.id);
+setCurrentContentId(content.id);
     setSidebarOpen(false);
     setQuizFinished(false);
     setCurrentQuestionIndex(0);
@@ -246,6 +292,8 @@ export default function MateriPage() {
 
   const toggleContentCompletion = async () => {
     if (!courseData || !currentContent || currentContent.is_completed) {
+      console.error("Missing courseData, currentContent, or content already completed.");
+      alert("Terjadi kesalahan: Data tidak lengkap atau materi sudah diselesaikan.");
       return;
     }
 
@@ -253,15 +301,25 @@ export default function MateriPage() {
     const hasPassedQuiz = history.some(attempt => attempt.passed);
 
     if (hasQuiz && !hasPassedQuiz) {
-        alert("Anda harus lulus kuis terlebih dahulu untuk menyelesaikan materi ini.");
+        setInfoModal({ 
+          isOpen: true, 
+          title: 'Kuis Belum Lulus', 
+          children: 'Anda harus lulus kuis terlebih dahulu untuk menyelesaikan materi ini.', 
+          variant: 'danger' 
+        });
         return;
     }
 
     try {
-        const res = await markContentAsComplete(courseData.id, currentContent.id);
+        const res = await markContentAsComplete(courseData.id, currentContent.id, courseData.active_batch_id);
 
         if (res.data?.message === "Content marked as complete") {
-            alert("Materi berhasil ditandai selesai!");
+            setInfoModal({ 
+              isOpen: true, 
+              title: 'Berhasil', 
+              children: 'Materi berhasil ditandai selesai!', 
+              variant: 'success' 
+            });
             
             const newCourseData = JSON.parse(JSON.stringify(courseData));
             for (const section of newCourseData.sections) {
@@ -284,7 +342,9 @@ export default function MateriPage() {
 
   const handleFinishCourse = async () => {
     if (!courseData || !currentContent || !enrollmentData || isFinishing) {
-        return;
+      console.error("Missing critical data for finishing course (enrollmentData).");
+      alert("Terjadi kesalahan: Data penting (seperti data pendaftaran) tidak ditemukan untuk menyelesaikan kursus.");
+      return;
     }
 
     setIsFinishing(true);
@@ -295,7 +355,8 @@ export default function MateriPage() {
       if (!currentContent.is_completed) {
         const res = await markContentAsComplete(
           courseData.id,
-          currentContent.id
+          currentContent.id,
+          courseData.active_batch_id // This can now be null
         );
         if (res.data?.course_progress_id) {
           progressId = res.data.course_progress_id;
@@ -319,12 +380,19 @@ export default function MateriPage() {
 
       const certificatePayload = {
         course_progress_id: progressId,
+        course_batch_id: courseData.active_batch_id, // This can now be null
       };
 
       await createCertificate(certificatePayload);
-      alert(
-        "Selamat! Anda telah menyelesaikan kursus ini. Sertifikat Anda sedang dibuat dan akan tersedia di halaman sertifikat."
-      );
+      setInfoModal({
+        isOpen: true,
+        title: 'Selamat!',
+        children: 'Anda telah menyelesaikan kursus ini. Sertifikat Anda sedang dibuat dan akan tersedia di halaman sertifikat.',
+        variant: 'success',
+        onConfirm: () => router.push('/certificates'),
+        confirmText: 'Lihat Sertifikat',
+        hideCancelButton: true,
+      });
 
       const newCourseData = JSON.parse(JSON.stringify(courseData));
       for (const section of newCourseData.sections) {
@@ -468,7 +536,41 @@ export default function MateriPage() {
   
   return (
     <ProtectedRoute>
-      {isAuthLoading || isLoading || !courseData || !currentContent ? (
+      <ConfirmModal
+        isOpen={infoModal.isOpen}
+        title={infoModal.title}
+        onConfirm={infoModal.onConfirm || (() => setInfoModal({ isOpen: false, title: '', children: '' }))}
+        confirmText={infoModal.confirmText || "Tutup"}
+        hideCancelButton={infoModal.hideCancelButton !== undefined ? infoModal.hideCancelButton : true}
+        variant={infoModal.variant}
+      >
+        {infoModal.children}
+      </ConfirmModal>
+
+      <ConfirmModal
+        isOpen={isLockedByStartDate}
+        title="Kursus Belum Dimulai"
+        onConfirm={() => router.push('/my-courses')}
+        confirmText="Kembali ke Kursus Saya"
+        showCancelButton={false}
+        variant="info"
+      >
+        Kursus ini akan dimulai pada: <span className="font-bold">{batchStartDate ? new Date(batchStartDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : ''}</span>.
+      </ConfirmModal>
+
+      <ConfirmModal
+        isOpen={showExpiredModal}
+        title="Akses Kedaluwarsa"
+        onConfirm={() => router.push(`/detail-course/${slug}`)}
+        confirmText="Beli Akses Lain"
+        onClose={() => router.push('/my-courses')}
+        cancelText="Kembali ke Kursus Saya"
+        variant="success"
+      >
+        Akses Anda untuk kursus ini telah berakhir. Silakan perpanjang langganan atau kembali ke daftar kursus Anda.
+      </ConfirmModal>
+      
+      {isLockedByStartDate ? null : (isAuthLoading || isLoading || !courseData || !currentContent) ? (
         <MateriSkeleton />
       ) : (
         (() => {
