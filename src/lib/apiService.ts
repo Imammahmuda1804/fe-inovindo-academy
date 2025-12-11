@@ -11,24 +11,94 @@ const api = axios.create({
 
 
 
-let isRefreshing = false;
-let subscribers = [];
+// --- Start of Refactored Logic ---
 
-const addSubscriber = (executor) => {
-  subscribers.push(executor);
+// This function will be called once from AuthContext.
+export const setupInterceptors = (onAuthFailure) => {
+  let isRefreshing = false;
+  let failedQueue = [];
+
+  const processQueue = (error, token = null) => {
+    failedQueue.forEach(prom => {
+      if (error) {
+        prom.reject(error);
+      } else {
+        prom.resolve(token);
+      }
+    });
+    failedQueue = [];
+  };
+
+  const refreshToken = async () => {
+    try {
+      const storedRefreshToken = localStorage.getItem("refresh_token");
+      if (!storedRefreshToken) {
+        throw new Error("No refresh token available.");
+      }
+      const response = await api.post("/refresh", { refresh_token: storedRefreshToken });
+      
+      if (response.data.access_token) {
+        localStorage.setItem("access_token", response.data.access_token);
+        if (response.data.refresh_token) {
+          localStorage.setItem("refresh_token", response.data.refresh_token);
+        }
+        return response.data.access_token;
+      } else {
+        throw new Error("Failed to refresh token, no access token received.");
+      }
+    } catch (error) {
+      console.error("Error inside refreshToken function. Triggering auth failure.", error);
+      onAuthFailure(); // Call the explicit logout function
+      throw error;
+    }
+  };
+
+  api.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+      const originalRequest = error.config;
+
+      if (error.response && error.response.status === 401 && !originalRequest._retry) {
+        if (isRefreshing) {
+          return new Promise(function(resolve, reject) {
+            failedQueue.push({ resolve, reject });
+          })
+            .then(token => {
+              originalRequest.headers.Authorization = 'Bearer ' + token;
+              return api(originalRequest);
+            })
+            .catch(err => {
+              return Promise.reject(err);
+            });
+        }
+
+        originalRequest._retry = true;
+        isRefreshing = true;
+
+        try {
+          const newAccessToken = await refreshToken();
+          api.defaults.headers.common['Authorization'] = 'Bearer ' + newAccessToken;
+          originalRequest.headers.Authorization = 'Bearer ' + newAccessToken;
+          processQueue(null, newAccessToken);
+          return api(originalRequest);
+        } catch (err) {
+          processQueue(err, null);
+          return Promise.reject(err);
+        } finally {
+          isRefreshing = false;
+        }
+      }
+
+      return Promise.reject(error);
+    }
+  );
 };
 
-const onRefreshFinished = (token, error) => {
-  subscribers.forEach((executor) => executor(token, error));
-};
-
-// 🧩 Interceptor: Tambahkan token Sanctum otomatis jika tersedia, kecuali untuk endpoint refresh
 api.interceptors.request.use(
   (config) => {
     if (typeof window !== "undefined") {
       const accessToken = localStorage.getItem("access_token");
-      // Jangan tambahkan token jika ini adalah permintaan untuk refresh token
-      if (accessToken && !config.url.includes('/refresh')) {
+      if (accessToken) {
         config.headers.Authorization = `Bearer ${accessToken}`;
       }
     }
@@ -37,49 +107,18 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// 🧱 Interceptor respons: handle token refresh menggunakan pola subscriber yang lengkap
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    const { config, response } = error;
-    const originalRequest = config;
-
-    if (response && response.status === 401) {
-      if (!isRefreshing) {
-        isRefreshing = true;
-        refreshToken()
-          .then((newAccessToken) => {
-            onRefreshFinished(newAccessToken, null);
-          })
-          .catch((err) => {
-            onRefreshFinished(null, err);
-            console.error("Refresh token failed, logging out.", err);
-            localStorage.removeItem("access_token");
-            localStorage.removeItem("refresh_token");
-            if (typeof window !== "undefined") {
-              window.dispatchEvent(new Event("auth-failure"));
-            }
-          })
-          .finally(() => {
-            isRefreshing = false;
-            subscribers = [];
-          });
-      }
-
-      return new Promise((resolve, reject) => {
-        addSubscriber((token, err) => {
-          if (err) {
-            return reject(err);
-          }
-          originalRequest.headers.Authorization = `Bearer ${token}`;
-          resolve(api(originalRequest));
-        });
-      });
+export const loginUser = async (credentials) => {
+  const response = await api.post("/login", credentials);
+  if (response.data.access_token) {
+    localStorage.setItem("access_token", response.data.access_token);
+    if (response.data.refresh_token) {
+      localStorage.setItem("refresh_token", response.data.refresh_token);
     }
-
-    return Promise.reject(error);
   }
-);
+  return response.data;
+};
+
+// --- End of Refactored Logic ---
 
 export const getCourses = async (params = {}) => {
   try {
@@ -159,40 +198,6 @@ export async function getPopularCourses() {
     return { data: [] };
   }
 }
-
-export const loginUser = async (credentials) => {
-  const response = await api.post("/login", credentials);
-  if (response.data.access_token) {
-    localStorage.setItem("access_token", response.data.access_token);
-    if (response.data.refresh_token) {
-      localStorage.setItem("refresh_token", response.data.refresh_token);
-    }
-  }
-  return response.data;
-};
-
-export const refreshToken = async () => {
-  try {
-    const refreshToken = localStorage.getItem("refresh_token");
-    if (!refreshToken) {
-      throw new Error("No refresh token found");
-    }
-    const response = await api.post("/refresh", { refresh_token: refreshToken });
-    if (response.data.access_token) {
-      localStorage.setItem("access_token", response.data.access_token);
-      if (response.data.refresh_token) {
-        localStorage.setItem("refresh_token", response.data.refresh_token);
-      }
-      return response.data.access_token;
-    }
-    throw new Error("Failed to refresh token");
-  } catch (error) {
-    console.error("Error refreshing token:", error);
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
-    throw error;
-  }
-};
 
 export const registerUser = async (userData) => {
   const response = await api.post("/register", userData);
@@ -354,6 +359,21 @@ export const markContentAsIncomplete = (courseId: number, contentId: number) =>
 
 export const createCertificate = async (payload: any) => {
   const response = await api.post("/certificates", payload);
+  return response.data;
+};
+
+export const regenerateCertificate = async (certificateId: string | number) => {
+  try {
+    const response = await api.post(`/certificates/${certificateId}/regenerate`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error regenerating certificate ${certificateId}:`, error);
+    throw error;
+  }
+};
+
+export const getGoogleAuthRedirectUrl = async () => {
+  const response = await api.get("/auth/google/redirect");
   return response.data;
 };
 

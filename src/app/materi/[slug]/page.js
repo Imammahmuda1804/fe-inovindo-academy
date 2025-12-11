@@ -49,14 +49,16 @@ export default function MateriPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalContent, setModalContent] = useState(null);
   const [isFinishing, setIsFinishing] = useState(false);
-  const [showExpiredModal, setShowExpiredModal] = useState(false);
   const [isLockedByStartDate, setIsLockedByStartDate] = useState(false);
   const [batchStartDate, setBatchStartDate] = useState(null);
+  const [errorModal, setErrorModal] = useState({ isOpen: false, title: '', message: ''});
   const [infoModal, setInfoModal] = useState({ isOpen: false, title: '', children: '', variant: 'info' });
+  const [certificateConfirmModal, setCertificateConfirmModal] = useState({ isOpen: false });
 
 
   const mainContentRef = useRef(null);
   const sidebarRef = useRef(null);
+  const isFirstLoad = useRef(true);
 
   const fetchCourseData = useCallback(
     async (isInitialLoad = false) => {
@@ -65,19 +67,7 @@ export default function MateriPage() {
 
       try {
         const response = await getMateriBySlug(slug);
-
-        // --- Start Debugging ---
-        console.log("Full API Response:", JSON.stringify(response, null, 2));
-        if (response) {
-          console.log("Response Message:", response.message);
-          console.log("Message Lowercased:", response.message?.toLowerCase());
-          const comparisonString = "akses anda ke kursus ini telah kadaluarsa.";
-          console.log("Comparison String:", comparisonString);
-          const isMatch = response.message?.toLowerCase() === comparisonString;
-          console.log("Is it a match?", isMatch);
-        }
-        // --- End Debugging ---
-
+        
         if (response && response.status === "success") {
           const rawCourseData = response.data;
           const activeBatchId = rawCourseData.active_batch_id;
@@ -108,17 +98,16 @@ export default function MateriPage() {
           if (currentCourseEnrollment) {
             setEnrollmentData(currentCourseEnrollment);
 
-            // Cek jika kursus batch belum dimulai
             if (currentCourseEnrollment.batch_info && currentCourseEnrollment.batch_info.start_date) {
               const startDate = new Date(currentCourseEnrollment.batch_info.start_date);
               const now = new Date();
-              now.setHours(0, 0, 0, 0); // Bandingkan hanya tanggal, bukan waktu
+              now.setHours(0, 0, 0, 0);
 
               if (startDate > now) {
                 setIsLockedByStartDate(true);
                 setBatchStartDate(startDate);
-                if (isInitialLoad) setIsLoading(false); // Matikan skeleton loading
-                return; // Hentikan eksekusi lebih lanjut
+                if (isInitialLoad) setIsLoading(false);
+                return;
               }
             }
           }
@@ -149,28 +138,33 @@ export default function MateriPage() {
           if (contentToSet) {
             setCurrentContent(contentToSet);
           }
-        } else if (
-          response &&
-          response.message?.toLowerCase() === "akses anda ke kursus ini telah kadaluarsa"
-        ) {
-          setShowExpiredModal(true);
         } else {
-          console.error(
-            "Failed to fetch course data:",
-            response?.message || "Unknown API response structure"
-          );
-          alert("Gagal memuat data materi.");
+          throw new Error(response?.message || "Gagal memuat data materi.");
         }
       } catch (error) {
-        const errorMessage = error.response?.data?.message || error.message;
-        if (errorMessage?.toLowerCase().includes("akses anda ke kursus ini telah")) {
-          setShowExpiredModal(true);
+        if (error.response) {
+          const { status, data } = error.response;
+          if (status === 401) {
+            router.push('/login');
+            return;
+          }
+          if (status === 403) {
+            let title = "Akses Ditolak";
+            let message = "Anda tidak memiliki izin untuk melihat materi ini.";
+            if (data.message === "Akses Anda ke kursus ini telah kedaluwarsa.") {
+              title = "Akses Kedaluwarsa";
+              message = data.message;
+            } else if (data.message === "You are not enrolled in this course.") {
+              message = "Anda tidak terdaftar di kursus ini. Silakan beli kursus terlebih dahulu.";
+            }
+            setErrorModal({ isOpen: true, title, message });
+          } else {
+            setErrorModal({ isOpen: true, title: "Error", message: "Terjadi kesalahan saat memuat materi kursus." });
+          }
         } else {
-          console.error("Error fetching course data:", error);
-          alert(
-            "Terjadi kesalahan saat memuat materi kursus. Silakan coba lagi nanti."
-          );
+          setErrorModal({ isOpen: true, title: "Error", message: "Gagal terhubung ke server. Silakan coba lagi nanti." });
         }
+        console.error("Error fetching course data:", error);
       } finally {
         if (isInitialLoad) setIsLoading(false);
       }
@@ -180,7 +174,8 @@ export default function MateriPage() {
 
   useEffect(() => {
     if (!isAuthLoading) {
-      fetchCourseData(true);
+      fetchCourseData(isFirstLoad.current);
+      isFirstLoad.current = false;
     }
   }, [slug, isAuthLoading, fetchCourseData]);
 
@@ -340,7 +335,8 @@ setCurrentContentId(content.id);
     }
   };
 
-  const handleFinishCourse = async () => {
+  const proceedToCreateCertificate = async () => {
+    setCertificateConfirmModal({ isOpen: false }); // Close the modal first
     if (!courseData || !currentContent || !enrollmentData || isFinishing) {
       console.error("Missing critical data for finishing course (enrollmentData).");
       alert("Terjadi kesalahan: Data penting (seperti data pendaftaran) tidak ditemukan untuk menyelesaikan kursus.");
@@ -356,31 +352,23 @@ setCurrentContentId(content.id);
         const res = await markContentAsComplete(
           courseData.id,
           currentContent.id,
-          courseData.active_batch_id // This can now be null
+          courseData.active_batch_id
         );
-        if (res.data?.course_progress_id) {
-          progressId = res.data.course_progress_id;
-        } else if (res.data?.id) {
-          progressId = res.data.id;
-        } else {
-          throw new Error(
-            "Gagal mendapatkan ID progres kursus dari server setelah menyelesaikan materi. " +
-              (res.data?.message || "")
-          );
+        progressId = res.data?.course_progress_id || res.data?.id;
+        if (!progressId) {
+          throw new Error("Gagal mendapatkan ID progres kursus dari server setelah menyelesaikan materi. " + (res.data?.message || ""));
         }
       } else {
         progressId = enrollmentData.course_progress_id;
       }
 
       if (!progressId) {
-        throw new Error(
-          "Tidak dapat menemukan ID progres kursus. Coba muat ulang halaman atau hubungi admin."
-        );
+        throw new Error("Tidak dapat menemukan ID progres kursus. Coba muat ulang halaman atau hubungi admin.");
       }
 
       const certificatePayload = {
         course_progress_id: progressId,
-        course_batch_id: courseData.active_batch_id, // This can now be null
+        course_batch_id: courseData.active_batch_id,
       };
 
       await createCertificate(certificatePayload);
@@ -394,11 +382,10 @@ setCurrentContentId(content.id);
         hideCancelButton: true,
       });
 
+      // Optimistically update UI
       const newCourseData = JSON.parse(JSON.stringify(courseData));
       for (const section of newCourseData.sections) {
-        const contentIndex = section.contents.findIndex(
-          (c) => c.id === currentContent.id
-        );
+        const contentIndex = section.contents.findIndex((c) => c.id === currentContent.id);
         if (contentIndex !== -1) {
           section.contents[contentIndex].is_completed = true;
           break;
@@ -407,22 +394,27 @@ setCurrentContentId(content.id);
       setCourseData(newCourseData);
       setCurrentContent({ ...currentContent, is_completed: true });
     } catch (error) {
-      console.error(
-        "Gagal menyelesaikan kursus atau membuat sertifikat:",
-        error
-      );
-      if (error.response && error.response.status === 422) {
-        const errors = error.response.data.errors;
-        const errorMessages = Object.values(errors).flat().join("\n");
-        alert(
-          `Gagal membuat sertifikat karena data tidak valid:\n${errorMessages}`
-        );
-      } else {
-        alert(error.message || "Terjadi kesalahan. Silakan hubungi admin.");
-      }
+      console.error("Gagal menyelesaikan kursus atau membuat sertifikat:", error);
+      const errorMessage = error.response?.data?.errors 
+        ? Object.values(error.response.data.errors).flat().join("\n") 
+        : error.message || "Terjadi kesalahan. Silakan hubungi admin.";
+      alert(error.response?.data?.errors ? `Gagal membuat sertifikat karena data tidak valid:\n${errorMessage}` : errorMessage);
     } finally {
       setIsFinishing(false);
     }
+  };
+
+  const handleFinishCourse = () => {
+    setCertificateConfirmModal({
+      isOpen: true,
+      title: "Konfirmasi Pembuatan Sertifikat",
+      children: "Nama yang tersimpan pada sertifikat adalah nama yang digunakan saat ini dan tidak bisa dirubah.",
+      confirmText: "Lanjutkan",
+      cancelText: "Ganti Nama",
+      onConfirm: proceedToCreateCertificate,
+      onClose: () => router.push('/settings'),
+      variant: 'warning'
+    });
   };
 
 
@@ -548,6 +540,30 @@ setCurrentContentId(content.id);
       </ConfirmModal>
 
       <ConfirmModal
+        isOpen={certificateConfirmModal.isOpen}
+        title={certificateConfirmModal.title}
+        onConfirm={certificateConfirmModal.onConfirm}
+        confirmText={certificateConfirmModal.confirmText}
+        onClose={certificateConfirmModal.onClose}
+        cancelText={certificateConfirmModal.cancelText}
+        variant={certificateConfirmModal.variant}
+      >
+        {certificateConfirmModal.children}
+      </ConfirmModal>
+
+      <ConfirmModal
+        isOpen={errorModal.isOpen}
+        title={errorModal.title}
+        onConfirm={() => router.push(`/detail-course/${slug}`)}
+        confirmText="Beli Kelas Ini"
+        onClose={() => router.push('/my-courses')}
+        cancelText="Kelas Saya"
+        variant="danger"
+      >
+        {errorModal.message}
+      </ConfirmModal>
+
+      <ConfirmModal
         isOpen={isLockedByStartDate}
         title="Kursus Belum Dimulai"
         onConfirm={() => router.push('/my-courses')}
@@ -557,20 +573,12 @@ setCurrentContentId(content.id);
       >
         Kursus ini akan dimulai pada: <span className="font-bold">{batchStartDate ? new Date(batchStartDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : ''}</span>.
       </ConfirmModal>
-
-      <ConfirmModal
-        isOpen={showExpiredModal}
-        title="Akses Kedaluwarsa"
-        onConfirm={() => router.push(`/detail-course/${slug}`)}
-        confirmText="Beli Akses Lain"
-        onClose={() => router.push('/my-courses')}
-        cancelText="Kembali ke Kursus Saya"
-        variant="success"
-      >
-        Akses Anda untuk kursus ini telah berakhir. Silakan perpanjang langganan atau kembali ke daftar kursus Anda.
-      </ConfirmModal>
       
-      {isLockedByStartDate ? null : (isAuthLoading || isLoading || !courseData || !currentContent) ? (
+      {isLockedByStartDate || errorModal.isOpen ? (
+        <div className="flex items-center justify-center h-screen">
+            {/* This will be shown when a modal is active, preventing skeleton flash */}
+        </div>
+        ) : (isAuthLoading || isLoading || !courseData || !currentContent) ? (
         <MateriSkeleton />
       ) : (
         (() => {

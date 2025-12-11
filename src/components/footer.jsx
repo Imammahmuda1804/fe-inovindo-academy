@@ -9,7 +9,7 @@ export default function Footer() {
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
       viewport={{ once: true, amount: 0.3 }}
-      className="text-gray-800 bg-white/20 backdrop-blur-lg border-t border-white/30"
+      className="relative z-50 text-gray-800 bg-white/20 backdrop-blur-lg border-t border-white/30"
     >
       <div className="w-full px-4 pt-8 md:pt-12 sm:px-6 md:px-8 lg:px-16">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-4">

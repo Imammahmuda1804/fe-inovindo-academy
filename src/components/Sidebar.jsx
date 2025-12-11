@@ -70,7 +70,7 @@ const Sidebar = () => {
       initial={{ x: -100, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       transition={{ duration: 0.5, ease: 'easeOut' }}
-      className="fixed bottom-4 left-4 right-4 z-[9999] rounded-2xl border border-white/30 bg-white/10 backdrop-blur-lg shadow-lg overflow-hidden md:relative md:bottom-auto md:left-auto md:right-auto md:w-80 md:shrink-0 md:bg-white/50"
+      className="fixed bottom-4 left-4 right-4 z-[2147483647] rounded-2xl border border-white/30 bg-white/10 backdrop-blur-lg shadow-lg overflow-hidden md:relative md:bottom-auto md:left-auto md:right-auto md:w-80 md:shrink-0 md:bg-white/50"
     >
       {/* Profile Section */}
       <div className="hidden md:block text-center p-6 border-b border-white/20">

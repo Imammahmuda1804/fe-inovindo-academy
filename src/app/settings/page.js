@@ -171,7 +171,7 @@ export default function SettingsPage() {
             <main className="container mx-auto py-8 pb-24 md:pb-8 relative">
               <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
                 <aside className="w-full lg:w-80">
-                  <div className="sticky top-48">
+                  <div className="md:sticky top-48">
                     <Sidebar />
                   </div>
                 </aside>
@@ -194,7 +194,7 @@ export default function SettingsPage() {
                   <div key={activeTab}>
                       {activeTab === 'Profil' && user && (
                         <AnimatedContent>
-                          <div className="space-y-8 isolate">
+                          <div className="space-y-8">
                             <SettingsCard title="Foto Profil" icon={<FaCamera />}>
                               <div className="flex flex-col sm:flex-row items-center gap-6">
                                 <div className="relative w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden shadow-inner flex-shrink-0">

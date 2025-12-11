@@ -364,12 +364,12 @@ export default function MyCoursesPage() {
           <main className="container mx-auto py-8 pb-24 md:pb-8 relative">
             <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
               <aside className="w-full lg:w-72">
-                <div className="sticky top-48">
+                <div className="md:sticky top-48">
                   <Sidebar />
                 </div>
               </aside>
 
-              <div className="flex-1">
+              <div className="flex-1 isolate">
                 <AnimatedContent distance={50} direction="vertical" reverse={true}>
                   <div className="mb-12 text-center">
                     <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 drop-shadow-lg">
@@ -430,15 +430,16 @@ export default function MyCoursesPage() {
                   {currentCourses.length > 0 ? (
                     <div
                       id="courses-container"
-                      className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 isolate"
+                      className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
                     >
                       {currentCourses.map((course, index) => (
-                                                  <motion.div
-                                                    key={course.enrollment_id}
-                                                    initial={{ opacity: 0, y: 20 }}
-                                                    animate={{ opacity: 1, y: 0 }}
-                                                    transition={{ duration: 0.3, delay: index * 0.05 }}
-                                                  >                          <CourseCard course={course} />
+                        <motion.div
+                          key={course.enrollment_id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3, delay: index * 0.05 }}
+                        >
+                          <CourseCard course={course} />
                         </motion.div>
                       ))}
                     </div>

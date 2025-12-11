@@ -20,7 +20,7 @@ import ensureAbsoluteUrl from "@/lib/urlHelpers";
 import "./courses.css";
 
 const CourseCard = ({ course }) => {
-  const router = useRouter();
+  // const router = useRouter(); // No longer needed for direct push
   const instructor = course.mentors?.[0]?.user;
   const instructorImage = instructor?.photo
     ? ensureAbsoluteUrl(instructor.photo)
@@ -28,9 +28,9 @@ const CourseCard = ({ course }) => {
 
   const hasAccess = !!course.has_access;
 
-  const handleCardClick = () => {
-    router.push(`/detail-course/${course.slug}`);
-  };
+  // const handleCardClick = () => { // No longer needed
+  //   router.push(`/detail-course/${course.slug}`);
+  // };
 
   const formatCurrency = (amount) => {
     if (typeof amount !== 'number' || amount < 0) return '';
@@ -52,49 +52,50 @@ const CourseCard = ({ course }) => {
         boxShadow: "0px 15px 25px rgba(0, 0, 0, 0.07)",
       }}
     >
-      <div
-        onClick={handleCardClick}
-        className="cursor-pointer flex flex-col flex-grow"
-      >
-        <div className="relative overflow-hidden w-full aspect-[16/9]">
-          <Image
-            src={course.thumbnail_url || "/assets/images/default-course.png"}
-            alt={course.name}
-            fill
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
-          />
-          {hasAccess && (
-            <div className="absolute top-2 right-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-              Terdaftar
-            </div>
-          )}
-        </div>
-        <div className="p-4 flex flex-col flex-grow">
-          <span className="text-xs font-semibold text-blue-600 bg-blue-100 px-2 py-1 rounded-full self-start mb-2">
-            {course.category?.name || "Uncategorized"}
-          </span>
-          <h2 className="text-lg font-bold text-gray-800 flex-grow">
-            {course.name}
-          </h2>
-
-          {instructor && (
-            <div className="flex items-center mt-3">
-              <div className="w-8 h-8 rounded-full overflow-hidden mr-3 flex-shrink-0">
-                <Image
-                  src={instructorImage}
-                  alt={instructor.name}
-                  width={32}
-                  height={32}
-                  className="object-cover w-full h-full"
-                />
+      <Link href={`/detail-course/${course.slug}`} passHref>
+        <div className="cursor-pointer flex flex-col flex-grow">
+          <div className="relative overflow-hidden w-full aspect-[16/9]">
+            <Image
+              src={course.thumbnail_url || "/assets/images/default-course.png"}
+              alt={course.name}
+              fill
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+            {hasAccess && (
+              <div className="absolute top-2 right-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                Terdaftar
               </div>
-              <span className="text-gray-600 text-sm font-medium">
-                {instructor.name}
-              </span>
-            </div>
-          )}
+            )}
+          </div>
+          <div className="p-4 flex flex-col flex-grow">
+            <span className="text-xs font-semibold text-blue-600 bg-blue-100 px-2 py-1 rounded-full self-start mb-2">
+              {course.category?.name || "Uncategorized"}
+            </span>
+            <h2 className="text-lg font-bold text-gray-800 line-clamp-2 min-h-[3.25rem]">
+              {course.name}
+            </h2>
+            {/* Spacer to push instructor and button/price to bottom */}
+            <div className="flex-grow"></div> 
+
+            {instructor && (
+              <div className="flex items-center mt-3">
+                <div className="w-8 h-8 rounded-full overflow-hidden mr-3 flex-shrink-0">
+                  <Image
+                    src={instructorImage}
+                    alt={instructor.name}
+                    width={32}
+                    height={32}
+                    className="object-cover w-full h-full"
+                  />
+                </div>
+                <span className="text-gray-600 text-sm font-medium">
+                  {instructor.name}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      </Link>
       <div className="p-4 pt-0">
         <div className="flex justify-end items-center">
           {hasAccess ? (

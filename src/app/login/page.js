@@ -6,10 +6,10 @@ import Image from "next/image";
 import { FaEnvelope, FaLock, FaUser, FaGoogle, FaCheckCircle } from "react-icons/fa";
 import FloatingLabelInput from "@/components/FloatingLabelInput.jsx";
 import { useRouter } from "next/navigation";
-import { loginUser, registerUser } from "@/lib/apiService";
+import { loginUser, registerUser, getGoogleAuthRedirectUrl } from "@/lib/apiService";
 import "./login.css";
 
-const SocialLoginButton = () => (
+const SocialLoginButton = ({ onGoogleLogin }) => (
   <>
     <div className="relative flex py-5 items-center">
       <div className="flex-grow border-t border-gray-300"></div>
@@ -18,7 +18,10 @@ const SocialLoginButton = () => (
       </span>
       <div className="flex-grow border-t border-gray-300"></div>
     </div>
-    <button className="w-full flex items-center justify-center p-3 font-semibold text-gray-700 transition-colors duration-300 border border-gray-300 rounded-lg hover:bg-gray-100">
+    <button
+      onClick={onGoogleLogin}
+      className="w-full flex items-center justify-center p-3 font-semibold text-gray-700 transition-colors duration-300 border border-gray-300 rounded-lg hover:bg-gray-100"
+    >
       <FaGoogle className="w-5 h-5 mr-3 text-red-500" />
       Masuk dengan Google
     </button>
@@ -110,82 +113,193 @@ const AuthForm = ({ isLoginView, onSwitch }) => {
     }
   };
 
-  return (
-    <div className="w-full">
-      <div className="w-full max-w-sm mx-auto">
-        <div className="text-center mb-8">
-          <Image
-            src="/assets/images/logo.png"
-            alt="Logo"
-            width={64}
-            height={64}
-            className="mx-auto mb-4"
-          />
-          <h1 className="text-3xl md:text-4xl font-extrabold text-slate-800">
-            {isLoginView ? "Selamat Datang!" : "Buat Akun Baru"}
-          </h1>
-          <p className="text-gray-600 mt-2">
-            {isLoginView
-              ? "Silakan masuk untuk melanjutkan."
-              : "Mulai perjalanan belajar Anda."}
-          </p>
-        </div>
-        <form onSubmit={handleSubmit}>
-          {!isLoginView && (
-            <FloatingLabelInput
-              type="text"
-              label="Nama Lengkap"
-              icon={FaUser}
-              name="name"
-              value={formState.name}
-              onChange={handleChange}
+        const handleGoogleLogin = async () => {
+
+          setIsLoading(true);
+
+          try {
+
+            const response = await getGoogleAuthRedirectUrl();
+
+            if (response && response.url) {
+
+              window.location.href = response.url;
+
+            } else {
+
+              setError("Failed to get Google authentication URL.");
+
+            }
+
+          } catch (err) {
+
+            setError("Error initiating Google login.");
+
+            console.error("Error initiating Google login:", err);
+
+          } finally {
+
+            setIsLoading(false);
+
+          }
+
+        };
+
+  
+
+    return (
+
+      <div className="w-full">
+
+        <div className="w-full max-w-sm mx-auto">
+
+          <div className="text-center mb-8">
+
+            <Image
+
+              src="/assets/images/logo.png"
+
+              alt="Logo"
+
+              width={64}
+
+              height={64}
+
+              className="mx-auto mb-4"
+
             />
-          )}
-          <FloatingLabelInput
-            type="email"
-            label="Email"
-            icon={FaEnvelope}
-            name="email"
-            value={formState.email}
-            onChange={handleChange}
-          />
-          <FloatingLabelInput
-            type="password"
-            label="Password"
-            icon={FaLock}
-            name="password"
-            value={formState.password}
-            onChange={handleChange}
-          />
-          {!isLoginView && (
+
+            <h1 className="text-3xl md:text-4xl font-extrabold text-slate-800">
+
+              {isLoginView ? "Selamat Datang!" : "Buat Akun Baru"}
+
+            </h1>
+
+            <p className="text-gray-600 mt-2">
+
+              {isLoginView
+
+                ? "Silakan masuk untuk melanjutkan."
+
+                : "Mulai perjalanan belajar Anda."}
+
+            </p>
+
+          </div>
+
+          <form onSubmit={handleSubmit}>
+
+            {!isLoginView && (
+
+              <FloatingLabelInput
+
+                type="text"
+
+                label="Nama Lengkap"
+
+                icon={FaUser}
+
+                name="name"
+
+                value={formState.name}
+
+                onChange={handleChange}
+
+              />
+
+            )}
+
             <FloatingLabelInput
+
+              type="email"
+
+              label="Email"
+
+              icon={FaEnvelope}
+
+              name="email"
+
+              value={formState.email}
+
+              onChange={handleChange}
+
+            />
+
+            <FloatingLabelInput
+
               type="password"
-              label="Konfirmasi Password"
+
+              label="Password"
+
               icon={FaLock}
-              name="password_confirmation"
-              value={formState.password_confirmation}
+
+              name="password"
+
+              value={formState.password}
+
               onChange={handleChange}
+
             />
-          )}
 
-          {isLoginView && (
-            <Link href="/reset-password">
-              <span className="block mb-4 text-sm text-right text-blue-600 cursor-pointer hover:underline">
-                Lupa password?
-              </span>
-            </Link>
-          )}
+            {!isLoginView && (
 
-          {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+              <FloatingLabelInput
 
-          <button
-            type="submit"
-            disabled={isLoading}
-            className={`w-full p-3 font-bold text-white rounded-lg shadow-lg hover:shadow-blue-500/40 bg-gradient-to-r from-blue-600 to-green-500 transition-colors ${isLoginView ? "mt-2" : "mt-6"} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}>
-            {isLoading ? (isLoginView ? 'Logging In...' : 'Registering...') : (isLoginView ? "Masuk" : "Daftar")}
-          </button>
+                type="password"
 
-          <SocialLoginButton />
+                label="Konfirmasi Password"
+
+                icon={FaLock}
+
+                name="password_confirmation"
+
+                value={formState.password_confirmation}
+
+                onChange={handleChange}
+
+              />
+
+            )}
+
+  
+
+            {isLoginView && (
+
+              <Link href="/reset-password">
+
+                <span className="block mb-4 text-sm text-right text-blue-600 cursor-pointer hover:underline">
+
+                  Lupa password?
+
+                </span>
+
+              </Link>
+
+            )}
+
+  
+
+            {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+
+  
+
+            <button
+
+              type="submit"
+
+              disabled={isLoading}
+
+              className={`w-full p-3 font-bold text-white rounded-lg shadow-lg hover:shadow-blue-500/40 bg-gradient-to-r from-blue-600 to-green-500 transition-colors ${isLoginView ? "mt-2" : "mt-6"} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}>
+
+              {isLoading ? (isLoginView ? 'Logging In...' : 'Registering...') : (isLoginView ? "Masuk" : "Daftar")}
+
+            </button>
+
+  
+
+            <SocialLoginButton onGoogleLogin={handleGoogleLogin} />
+
+  
 
           <p className="block mt-6 text-sm text-center text-gray-600">
             {isLoginView ? "Belum punya akun?" : "Sudah punya akun?"}{" "}

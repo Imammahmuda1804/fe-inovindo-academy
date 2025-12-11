@@ -7,12 +7,13 @@ import AnimatedContent from "@/components/animatedcontent.jsx";
 import Sidebar from "@/components/Sidebar.jsx";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import CertificatesSkeleton from "@/components/CertificatesSkeleton.jsx";
-import { FaSearch, FaCertificate, FaDownload } from "react-icons/fa";
-import { getMyCertificates } from "@/lib/apiService";
+import { FaSearch, FaCertificate, FaDownload, FaSync } from "react-icons/fa";
+import { getMyCertificates, regenerateCertificate } from "@/lib/apiService";
 import { useAuth } from "@/context/AuthContext";
+import { useModal } from "@/context/ModalContext";
 import { ensureAbsoluteUrl } from "@/lib/urlHelpers";
 
-const CertificateCard = ({ cert, index }) => {
+const CertificateCard = ({ cert, index, onRegenerate, isRegenerating }) => {
   return (
     <AnimatedContent distance={50} delay={index * 0.1}>
       <div className="bg-white border border-gray-200/80 rounded-2xl shadow-lg overflow-hidden group transition-all duration-300 hover:shadow-xl hover:-translate-y-1.5">
@@ -24,42 +25,58 @@ const CertificateCard = ({ cert, index }) => {
             className="object-cover transition-transform duration-500 group-hover:scale-110"
           />{" "}
         </div>
-        <div className="p-5">
-          <p className="text-sm text-gray-500 mb-1">Sertifikat Kelulusan</p>
-          <h3 className="text-lg font-bold text-gray-800 mb-3 min-h-[3.5rem]">
-            {cert.course_name}
-          </h3>
-          <div className="text-sm text-gray-600 space-y-2 mb-4">
-            <p>
-              <span className="font-semibold">Tanggal Terbit:</span>{" "}
-              {new Date(cert.issued_date).toLocaleDateString("id-ID", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
-            </p>
-            <p>
-              <span className="font-semibold">Kode:</span>{" "}
-              <span className="font-mono">{cert.certificate_code}</span>
-            </p>
-            {cert.creation_year && (
+        <div className="p-5 flex flex-col h-full">
+          <div className="flex-grow">
+            <p className="text-sm text-gray-500 mb-1">Sertifikat Kelulusan</p>
+            <h3 className="text-lg font-bold text-gray-800 mb-3 min-h-[3.5rem]">
+              {cert.course_name}
+            </h3>
+            <div className="text-sm text-gray-600 space-y-2 mb-4">
               <p>
-                <span className="font-semibold">Tahun Pembuatan:</span>{" "}
-                {cert.creation_year}
+                <span className="font-semibold">Tanggal Terbit:</span>{" "}
+                {new Date(cert.issued_date).toLocaleDateString("id-ID", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
               </p>
-            )}
+              <p>
+                <span className="font-semibold">Kode:</span>{" "}
+                <span className="font-mono">{cert.certificate_code}</span>
+              </p>
+              {cert.creation_year && (
+                <p>
+                  <span className="font-semibold">Tahun Pembuatan:</span>{" "}
+                  {cert.creation_year}
+                </p>
+              )}
+            </div>
           </div>
-          <motion.a
-            href={ensureAbsoluteUrl(cert.download_url)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full mt-4 inline-flex items-center justify-center px-4 py-2.5 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <FaDownload className="mr-2" />
-            Lihat & Unduh Sertifikat
-          </motion.a>{" "}
+          <div className="mt-4 space-y-3">
+            <motion.a
+              href={ensureAbsoluteUrl(cert.download_url)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full inline-flex items-center justify-center px-4 py-2.5 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <FaDownload className="mr-2" />
+              Lihat & Unduh
+            </motion.a>
+            <motion.button
+              onClick={() => onRegenerate(cert.id)}
+              disabled={isRegenerating}
+              className="w-full inline-flex items-center justify-center px-4 py-2.5 bg-gray-100 text-gray-700 font-semibold rounded-lg border border-gray-300 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <FaSync
+                className={`mr-2 ${isRegenerating ? "animate-spin" : ""}`}
+              />
+              {isRegenerating ? "Memproses..." : "Generate Ulang"}
+            </motion.button>
+          </div>
         </div>
       </div>
     </AnimatedContent>
@@ -68,40 +85,100 @@ const CertificateCard = ({ cert, index }) => {
 
 export default function CertificatesPage() {
   const { isLoggedIn, isAuthLoading } = useAuth();
+  const { openModal, closeModal } = useModal();
   const [certificates, setCertificates] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRegenerating, setIsRegenerating] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     const fetchCertificatesData = async () => {
-      if (isLoggedIn) {
-        try {
-          setIsLoading(true);
-          const data = await getMyCertificates();
-          setCertificates(
-            data.map((cert) => ({
-                          id: cert.id,
-                          course_name: cert.course?.name || 'N/A',
-                          thumbnail: cert.course?.thumbnail,
-                          issued_date: cert.created_at,
-                          download_url: cert.sertificate_url,
-                          certificate_code: cert.code || 'N/A',
-                          creation_year: cert.course?.creation_year,
-                        })));
-        } catch (error) {
-          console.error("Error fetching certificates:", error);
-        } finally {
-          setIsLoading(false);
-        }
-      } else {
+      try {
+        setIsLoading(true);
+        const data = await getMyCertificates();
+        setCertificates(
+          data.map((cert) => ({
+            id: cert.id,
+            course_name: cert.course?.name || "N/A",
+            thumbnail: cert.course?.thumbnail,
+            issued_date: cert.created_at,
+            download_url: cert.sertificate_url,
+            certificate_code: cert.code || "N/A",
+            creation_year: cert.course?.creation_year,
+          }))
+        );
+      } catch (error) {
+        console.error("Error fetching certificates:", error);
+      } finally {
         setIsLoading(false);
       }
     };
 
-    if (!isAuthLoading) {
+    if (isLoggedIn && !isAuthLoading) {
       fetchCertificatesData();
+    } else if (!isLoggedIn && !isAuthLoading) {
+      setCertificates([]); // Clear certificates if not logged in
+      setIsLoading(false);
     }
   }, [isLoggedIn, isAuthLoading]);
+
+  const handleRegenerate = (certificateId) => {
+    const modalProps = {
+      title: "Konfirmasi Generate Ulang Sertifikat",
+      message:
+        "Apakah Anda yakin ingin membuat ulang sertifikat ini? File yang lama akan diganti dengan yang baru.",
+      confirmText: "Ya, Buat Ulang",
+      cancelText: "Batal",
+    };
+
+    openModal({
+      ...modalProps,
+      onConfirm: async () => {
+        // Re-render the modal in a loading state
+        openModal({
+          ...modalProps,
+          isLoading: true,
+          onConfirm: () => {}, // Prevent re-clicking
+          onClose: () => {}, // Prevent closing while loading
+        });
+
+        setIsRegenerating(certificateId);
+        try {
+          const result = await regenerateCertificate(certificateId);
+          setCertificates((prev) =>
+            prev.map((cert) =>
+              cert.id === certificateId
+                ? { ...cert, download_url: result.data.sertificate_url }
+                : cert
+            )
+          );
+          
+          openModal({
+            title: "Berhasil",
+            message: "Sertifikat telah berhasil dibuat ulang.",
+            confirmText: "Tutup",
+            onConfirm: closeModal,
+            hideCancelButton: true,
+            variant: 'success'
+          });
+        } catch (error) {
+          console.error("Error regenerating certificate:", error);
+          
+          openModal({
+            title: "Gagal",
+            message:
+              "Gagal membuat ulang sertifikat. Silakan coba lagi nanti.",
+            confirmText: "Tutup",
+            onConfirm: closeModal,
+            hideCancelButton: true,
+            variant: 'danger'
+          });
+        } finally {
+          setIsRegenerating(null);
+        }
+      },
+    });
+  };
 
   const filteredCertificates = certificates.filter(
     (cert) =>
@@ -118,13 +195,17 @@ export default function CertificatesPage() {
           <main className="container mx-auto py-8 pb-24 md:pb-8 relative">
             <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
               <aside className="w-full lg:w-80">
-                <div className="sticky top-48">
+                <div className="md:sticky top-48">
                   <Sidebar />
                 </div>
               </aside>
 
               <div className="flex-1">
-                <AnimatedContent distance={50} direction="vertical" reverse={true}>
+                <AnimatedContent
+                  distance={50}
+                  direction="vertical"
+                  reverse={true}
+                >
                   <div className="mb-12 text-center">
                     <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 drop-shadow-lg">
                       Sertifikat Saya
@@ -154,9 +235,15 @@ export default function CertificatesPage() {
 
                 <AnimatedContent distance={50} delay={0.4}>
                   {filteredCertificates.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8 isolate">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
                       {filteredCertificates.map((cert, index) => (
-                        <CertificateCard key={cert.id} cert={cert} index={index} />
+                        <CertificateCard
+                          key={cert.id}
+                          cert={cert}
+                          index={index}
+                          onRegenerate={handleRegenerate}
+                          isRegenerating={isRegenerating === cert.id}
+                        />
                       ))}
                     </div>
                   ) : (
@@ -166,7 +253,8 @@ export default function CertificatesPage() {
                         Belum Ada Sertifikat
                       </h3>
                       <p className="text-gray-500 mt-2">
-                        Selesaikan kursus untuk mendapatkan sertifikat pertama Anda.
+                        Selesaikan kursus untuk mendapatkan sertifikat pertama
+                        Anda.
                       </p>
                     </div>
                   )}

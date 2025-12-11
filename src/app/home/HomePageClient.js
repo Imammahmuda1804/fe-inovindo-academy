@@ -49,10 +49,6 @@ function CourseCard({ course, index }) {
           alt={course.alt || course.title || "Course image"}
           fill
           className="object-cover transition-transform duration-500 ease-in-out group-hover:scale-110"
-          // If image is an external URL, avoid Next.js image optimization to prevent server-side proxy fetch errors
-          unoptimized={
-            typeof imageSrc === "string" && imageSrc.startsWith("http")
-          }
         />
         <div className="absolute top-3 right-3 bg-yellow-400 text-gray-900 text-xs font-semibold px-3 py-1 rounded-lg shadow-md z-10">
           Populer
@@ -190,10 +186,6 @@ function MentorCard({ mentor, index }) {
           width={96}
           height={96}
           className="object-cover w-24 h-24 mx-auto rounded-full shadow-lg"
-          // mark remote mentor images unoptimized to avoid server-side fetch issues during dev
-          unoptimized={
-            typeof mentor.image === "string" && mentor.image.startsWith("http")
-          }
         />
         <h3 className="mt-4 text-lg font-bold text-gray-800">{mentor.name}</h3>
         <p className="text-sm text-gray-600">{mentor.title}</p>
@@ -539,11 +531,6 @@ export default function HomePageClient({
                         alt={`${category.title} Icon`}
                         fill
                         className="object-cover"
-                        unoptimized={
-                          typeof ensureAbsoluteUrl(category.icon) ===
-                            "string" &&
-                          ensureAbsoluteUrl(category.icon).startsWith("http")
-                        }
                       />
                     </div>
                     <h3 className="mb-2 text-xl font-bold text-gray-800">

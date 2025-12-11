@@ -222,17 +222,27 @@ const DetailCoursePage = ({ params }) => {
               <AnimatedContent distance={50} duration={1.1} delay={0.2}>
                 <div className="mb-8 overflow-hidden rounded-2xl shadow-2xl">
                   <div className="relative pb-[56.25%] h-0">
-                    <iframe
-                      className="absolute top-0 left-0 w-full h-full"
-                      src={
-                        getYouTubeEmbedUrl(courseData?.video) ||
-                        "https://www.youtube.com/embed/5JVjl5kzTRk"
-                      }
-                      title="YouTube video player"
-                      frameBorder="0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                      allowFullScreen
-                    ></iframe>
+                    {getYouTubeEmbedUrl(courseData?.video) ? (
+                      <iframe
+                        className="absolute top-0 left-0 w-full h-full"
+                        src={getYouTubeEmbedUrl(courseData?.video)}
+                        title="YouTube video player"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                      ></iframe>
+                    ) : (
+                      <Image
+                        src={
+                          ensureAbsoluteUrl(courseData.thumbnail_url) ||
+                          "/assets/images/default-course.png"
+                        }
+                        alt={courseData.name || "Course Thumbnail"}
+                        fill
+                        className="absolute top-0 left-0 w-full h-full object-cover rounded-2xl"
+                        priority
+                      />
+                    )}
                   </div>
                 </div>
               </AnimatedContent>
