@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation"; // Import useRouter
 import { motion, AnimatePresence } from "framer-motion";
 import AnimatedContent from "@/components/animatedcontent.jsx";
 import DetailCourseSkeleton from "@/components/DetailCourseSkeleton.jsx";
@@ -31,6 +32,7 @@ import { BiSolidCategory } from "react-icons/bi";
 
 const DetailCoursePage = ({ params }) => {
   const resolvedParams = React.use(params);
+  const router = useRouter(); // Initialize useRouter
   const [isLoading, setIsLoading] = useState(true);
   const [courseData, setCourseData] = useState(null);
   const [openSections, setOpenSections] = useState({
@@ -39,6 +41,7 @@ const DetailCoursePage = ({ params }) => {
   });
   const [selectedBatchId, setSelectedBatchId] = useState(null);
   const [selectedPricingId, setSelectedPricingId] = useState(null);
+  const [isNavigating, setIsNavigating] = useState(false); // New state for navigation loading
 
   useEffect(() => {
     const fetchCourseData = async () => {
@@ -664,44 +667,68 @@ const DetailCoursePage = ({ params }) => {
 
                       {courseData.has_access ? (
                         <div className="space-y-4">
-                          <Link href={`/materi/${courseData.slug}`} passHref>
-                            <motion.button
-                              className="w-full px-8 py-4 text-lg font-semibold text-white transition-all duration-300 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 shadow-lg hover:shadow-indigo-500/50"
-                              whileHover={{
-                                scale: 1.05,
-                                boxShadow:
-                                  "0px 15px 25px rgba(99, 102, 241, 0.4)",
-                              }}
-                              whileTap={{ scale: 0.95 }}
-                            >
-                              <div className="flex items-center justify-center gap-3">
+                          <motion.button
+                            onClick={() => {
+                              setIsNavigating(true);
+                              router.push(`/materi/${courseData.slug}`);
+                            }}
+                            disabled={isNavigating}
+                            className="w-full px-8 py-4 text-lg font-semibold text-white transition-all duration-300 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 shadow-lg hover:shadow-indigo-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            whileHover={{
+                              scale: 1.05,
+                              boxShadow:
+                                "0px 15px 25px rgba(99, 102, 241, 0.4)",
+                            }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            <div className="flex items-center justify-center gap-3">
+                              {isNavigating ? (
+                                <svg className="animate-spin h-5 w-5 mr-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                              ) : (
                                 <FaPlayCircle />
-                                <span>Mulai Belajar</span>
-                              </div>
-                            </motion.button>
-                          </Link>
+                              )}
+                              <span>{isNavigating ? "Memuat..." : "Mulai Belajar"}</span>
+                            </div>
+                          </motion.button>
                           <div className="text-center">
                             <p className="text-sm text-gray-600 mb-2">
                               Atau ingin membeli akses lagi?
                             </p>
-                            <Link href={`/payment/${resolvedParams.slug}`} passHref>
-                              <motion.button
-                                className="w-full px-6 py-3 text-base font-semibold text-blue-600 transition-all duration-300 bg-white border-2 border-blue-500 rounded-xl hover:bg-blue-50"
+                            <motion.button
+                                onClick={() => {
+                                  setIsNavigating(true);
+                                  router.push(`/payment/${resolvedParams.slug}`);
+                                }}
+                                disabled={isNavigating}
+                                className="w-full px-6 py-3 text-base font-semibold text-blue-600 transition-all duration-300 bg-white border-2 border-blue-500 rounded-xl hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
                                 whileHover={{ scale: 1.03 }}
                                 whileTap={{ scale: 0.98 }}
                               >
                                 <div className="flex items-center justify-center gap-3">
-                                  <FaShoppingCart />
-                                  <span>Beli Batch/Paket Lain</span>
+                                  {isNavigating ? (
+                                    <svg className="animate-spin h-5 w-5 mr-3 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                  ) : (
+                                    <FaShoppingCart />
+                                  )}
+                                  <span>{isNavigating ? "Memuat..." : "Beli Batch/Paket Lain"}</span>
                                 </div>
                               </motion.button>
-                            </Link>
                           </div>
                         </div>
                       ) : (
-                        <Link href={`/payment/${resolvedParams.slug}`} passHref>
-                          <motion.button
-                            className="w-full px-8 py-4 text-lg font-semibold text-white transition-all duration-300 rounded-xl bg-gradient-to-r from-green-400 to-blue-500 shadow-lg hover:shadow-blue-500/50"
+                        <motion.button
+                            onClick={() => {
+                              setIsNavigating(true);
+                              router.push(`/payment/${resolvedParams.slug}`);
+                            }}
+                            disabled={isNavigating}
+                            className="w-full px-8 py-4 text-lg font-semibold text-white transition-all duration-300 rounded-xl bg-gradient-to-r from-green-400 to-blue-500 shadow-lg hover:shadow-blue-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
                             whileHover={{
                               scale: 1.05,
                               boxShadow: "0px 15px 25px rgba(37, 99, 235, 0.4)",
@@ -709,11 +736,17 @@ const DetailCoursePage = ({ params }) => {
                             whileTap={{ scale: 0.95 }}
                           >
                             <div className="flex items-center justify-center gap-3">
-                              <FaShoppingCart />
-                              <span>Beli Kursus Ini</span>
+                              {isNavigating ? (
+                                <svg className="animate-spin h-5 w-5 mr-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                              ) : (
+                                <FaShoppingCart />
+                              )}
+                              <span>{isNavigating ? "Memuat..." : "Beli Kursus Ini"}</span>
                             </div>
                           </motion.button>
-                        </Link>
                       )}
 
                       <ul className="mt-6 space-y-3 text-gray-700">

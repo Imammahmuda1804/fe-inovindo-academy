@@ -19,6 +19,7 @@ import "../payment.css";
 import DetailCourseSkeleton from "@/components/DetailCourseSkeleton";
 import { useAuth } from "@/context/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import Toast from "@/components/Toast"; // Import Toast
 
 // --- FUNGSI UTILITAS ---
 const formatRupiah = (amount) =>
@@ -79,6 +80,15 @@ export default function PaymentPage({ params }) {
   });
   const [isReadyToPay, setIsReadyToPay] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  
+  // State for Toast and Inline Error
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  const [inlineError, setInlineError] = useState(null);
+
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+  };
+
 
   useEffect(() => {
     const fetchCourseData = async () => {
@@ -112,8 +122,9 @@ export default function PaymentPage({ params }) {
   const hasBatches = courseData?.has_batch;
 
   const handlePayment = React.useCallback(async () => {
+    setInlineError(null); // Reset inline error on new attempt
     if (!isReadyToPay || isProcessingPayment) {
-      alert("Silakan pilih salah satu opsi yang tersedia untuk melanjutkan.");
+      setInlineError("Silakan pilih salah satu opsi yang tersedia untuk melanjutkan.");
       return;
     }
     setIsProcessingPayment(true);
@@ -128,11 +139,11 @@ export default function PaymentPage({ params }) {
       if (summary.totalAmount === 0) {
         // Logika baru untuk kursus gratis, disesuaikan dengan dokumentasi
         if (response.status === "success") { // Cukup periksa status sukses umum
-          alert("Anda berhasil terdaftar di kursus ini!");
+          showToast("Anda berhasil terdaftar di kursus ini!", "success");
           router.push(`/payment-success/${response.data.booking_trx_id}`); // booking_trx_id dijamin ada
         } else {
           console.error("Failed to enroll in free course:", response);
-          alert(response.message || "Gagal mendaftar ke kursus gratis. Silakan coba lagi.");
+          showToast(response.message || "Gagal mendaftar ke kursus gratis. Silakan coba lagi.", "error");
         }
       } else {
         // Alur pembayaran Midtrans yang sudah ada untuk kursus berbayar
@@ -141,34 +152,34 @@ export default function PaymentPage({ params }) {
             window.snap.pay(response.data.snap_token, {
               onSuccess: function (result) {
                 console.log("Payment successful:", result);
-                alert("Pembayaran berhasil!");
+                showToast("Pembayaran berhasil!", "success");
                 router.push(`/payment-success/${response.data.booking_trx_id}`);
               },
               onPending: function (result) {
                 console.log("Payment pending:", result);
-                alert("Pembayaran Anda sedang diproses.");
+                showToast("Pembayaran Anda sedang diproses.", "info");
                 router.push(`/payment-success/${response.data.booking_trx_id}`);
               },
               onError: function (result) {
                 console.error("Payment error:", result);
-                alert("Pembayaran gagal. Silakan coba lagi.");
+                showToast("Pembayaran gagal. Silakan coba lagi.", "error");
               },
               onClose: function () {
                 console.log("Payment popup closed by user.");
-                alert("Anda menutup jendela pembayaran sebelum menyelesaikan transaksi.");
+                showToast("Anda menutup jendela pembayaran sebelum menyelesaikan transaksi.", "warning");
               },
             });
           }
         } else {
           const errorMessage = response.message || "Gagal memulai pembayaran. Silakan coba lagi.";
           console.error("Failed to initiate Midtrans payment:", response);
-          alert(errorMessage);
+          showToast(errorMessage, "error");
         }
       }
     } catch (error) {
       const errorMessage = error.response?.data?.message || "Terjadi kesalahan saat membuat transaksi.";
       console.error("Error creating transaction:", error);
-      alert(errorMessage);
+      showToast(errorMessage, "error");
     } finally {
       setIsProcessingPayment(false);
     }
@@ -177,7 +188,8 @@ export default function PaymentPage({ params }) {
   useEffect(() => {
     if (!courseData) return;
 
-
+    // Reset inline error when selection changes
+    setInlineError(null);
 
     let currentPrice = 0;
     let isReady = false;
@@ -245,6 +257,7 @@ export default function PaymentPage({ params }) {
   
     return (
       <div className="relative min-h-screen font-sans bg-gray-50 pt-16 px-2 sm:px-6 md:px-8 lg:px-16">
+        <Toast toast={toast} setToast={setToast} />
         <main className="container mx-auto py-8 relative z-10">
           <motion.div className="grid lg:grid-cols-3 gap-8" variants={containerVariants} initial="hidden" animate="visible">
             <motion.div className="lg:col-span-2 space-y-6" variants={containerVariants}>
@@ -427,6 +440,15 @@ export default function PaymentPage({ params }) {
                   </AnimatePresence>
                 </div>
                 <div className="relative z-10 p-6 border-t border-gray-200/80">
+                  {inlineError && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: -10 }} 
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mb-4 p-3 bg-red-100 border border-red-200 text-red-700 text-sm rounded-lg text-center"
+                    >
+                      {inlineError}
+                    </motion.div>
+                  )}
                   <motion.div animate={isReadyToPay ? { scale: [1, 1.03, 1] } : {}} transition={isReadyToPay ? { duration: 1.5, repeat: Infinity, ease: "easeInOut" } : {}} className="rounded-lg shadow-lg">
                     <button
                       onClick={handlePayment}

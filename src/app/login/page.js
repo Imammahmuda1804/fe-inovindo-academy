@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import { loginUser, registerUser, getGoogleAuthRedirectUrl } from "@/lib/apiService";
 import "./login.css";
 
-const SocialLoginButton = ({ onGoogleLogin }) => (
+const SocialLoginButton = ({ onGoogleLogin, isLoading }) => (
   <>
     <div className="relative flex py-5 items-center">
       <div className="flex-grow border-t border-gray-300"></div>
@@ -20,7 +20,8 @@ const SocialLoginButton = ({ onGoogleLogin }) => (
     </div>
     <button
       onClick={onGoogleLogin}
-      className="w-full flex items-center justify-center p-3 font-semibold text-gray-700 transition-colors duration-300 border border-gray-300 rounded-lg hover:bg-gray-100"
+      disabled={isLoading}
+      className="w-full flex items-center justify-center p-3 font-semibold text-gray-700 transition-colors duration-300 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:bg-gray-200 disabled:cursor-not-allowed"
     >
       <FaGoogle className="w-5 h-5 mr-3 text-red-500" />
       Masuk dengan Google
@@ -43,16 +44,18 @@ const AuthForm = ({ isLoginView, onSwitch }) => {
     password: "",
     password_confirmation: "",
   });
-  const [error, setError] = useState("");
+  const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
-    setFormState({ ...formState, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormState({ ...formState, [name]: value });
+    setErrors(prev => ({ ...prev, [name]: '' })); // Clear error for this field on change
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
+    setErrors({}); // Reset errors at the start of submission
     setIsLoading(true);
 
     if (isLoginView) {
@@ -67,7 +70,11 @@ const AuthForm = ({ isLoginView, onSwitch }) => {
           router.push("/home");
         }
       } catch (err) {
-        setError("Login failed. Please check your credentials.");
+        if (err.response?.data?.errors) {
+          setErrors(err.response.data.errors); // Set field-specific errors
+        } else {
+          setErrors({ general: err.response?.data?.message || "Login failed. Please check your credentials." });
+        }
         console.error(err);
       } finally {
         setIsLoading(false);
@@ -75,7 +82,7 @@ const AuthForm = ({ isLoginView, onSwitch }) => {
     } else {
       // Register logic
       if (formState.password !== formState.password_confirmation) {
-        setError("Password dan konfirmasi password tidak cocok.");
+        setErrors(prev => ({ ...prev, password_confirmation: "Password dan konfirmasi password tidak cocok." }));
         setIsLoading(false);
         return;
       }
@@ -99,13 +106,11 @@ const AuthForm = ({ isLoginView, onSwitch }) => {
           variant: 'success',
         });
       } catch (err) {
-        let specificErrorMessage = "Registration failed. Please check your data.";
-        if (err.response?.data?.email && Array.isArray(err.response.data.email) && err.response.data.email.length > 0) {
-          specificErrorMessage = err.response.data.email[0];
-        } else if (err.response?.data?.message) {
-          specificErrorMessage = err.response.data.message;
+        if (err.response?.data?.errors) {
+          setErrors(err.response.data.errors); // Set field-specific errors
+        } else {
+          setErrors({ general: err.response?.data?.message || "Registration failed. Please check your data." });
         }
-        setError(specificErrorMessage);
         console.error(err);
       } finally {
         setIsLoading(false);
@@ -127,13 +132,13 @@ const AuthForm = ({ isLoginView, onSwitch }) => {
 
             } else {
 
-              setError("Failed to get Google authentication URL.");
+              setErrors({ general: "Failed to get Google authentication URL." });
 
             }
 
           } catch (err) {
 
-            setError("Error initiating Google login.");
+            setErrors({ general: "Error initiating Google login." });
 
             console.error("Error initiating Google login:", err);
 
@@ -190,114 +195,103 @@ const AuthForm = ({ isLoginView, onSwitch }) => {
           <form onSubmit={handleSubmit}>
 
             {!isLoginView && (
-
               <FloatingLabelInput
-
                 type="text"
-
                 label="Nama Lengkap"
-
                 icon={FaUser}
-
                 name="name"
-
                 value={formState.name}
-
                 onChange={handleChange}
-
+                errorMessage={errors.name} // Pass specific error
               />
-
             )}
-
             <FloatingLabelInput
-
               type="email"
-
               label="Email"
-
               icon={FaEnvelope}
-
               name="email"
-
               value={formState.email}
-
               onChange={handleChange}
-
+              errorMessage={errors.email} // Pass specific error
             />
-
             <FloatingLabelInput
-
               type="password"
-
               label="Password"
-
               icon={FaLock}
-
               name="password"
-
               value={formState.password}
-
               onChange={handleChange}
-
+              errorMessage={errors.password} // Pass specific error
             />
-
             {!isLoginView && (
-
               <FloatingLabelInput
-
                 type="password"
-
                 label="Konfirmasi Password"
-
                 icon={FaLock}
-
                 name="password_confirmation"
-
                 value={formState.password_confirmation}
-
                 onChange={handleChange}
-
+                errorMessage={errors.password_confirmation} // Pass specific error
               />
-
             )}
-
   
-
             {isLoginView && (
-
               <Link href="/reset-password">
-
                 <span className="block mb-4 text-sm text-right text-blue-600 cursor-pointer hover:underline">
-
                   Lupa password?
-
                 </span>
-
               </Link>
-
             )}
+  
+            {errors.general && <p className="text-red-500 text-sm mb-4">{errors.general}</p>}
 
   
 
-            {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+                        <button
 
   
 
-            <button
-
-              type="submit"
-
-              disabled={isLoading}
-
-              className={`w-full p-3 font-bold text-white rounded-lg shadow-lg hover:shadow-blue-500/40 bg-gradient-to-r from-blue-600 to-green-500 transition-colors ${isLoginView ? "mt-2" : "mt-6"} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}>
-
-              {isLoading ? (isLoginView ? 'Logging In...' : 'Registering...') : (isLoginView ? "Masuk" : "Daftar")}
-
-            </button>
+                          type="submit"
 
   
 
-            <SocialLoginButton onGoogleLogin={handleGoogleLogin} />
+                          disabled={isLoading}
+
+  
+
+                          className={`w-full p-3 font-bold text-white rounded-lg shadow-lg hover:shadow-blue-500/40 bg-gradient-to-r from-blue-600 to-green-500 transition-colors flex items-center justify-center ${isLoginView ? "mt-2" : "mt-6"} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}>
+
+  
+
+                          {isLoading ? (
+
+  
+
+                            <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+
+  
+
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+
+  
+
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+
+  
+
+                            </svg>
+
+  
+
+                          ) : (isLoginView ? "Masuk" : "Daftar")}
+
+  
+
+                        </button>
+
+  
+
+            <SocialLoginButton onGoogleLogin={handleGoogleLogin} isLoading={isLoading} />
 
   
 

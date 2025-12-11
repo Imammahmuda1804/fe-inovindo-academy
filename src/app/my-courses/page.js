@@ -5,7 +5,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import AnimatedContent from "@/components/animatedcontent.jsx";
-import { FaSearch, FaCode, FaPalette, FaBullhorn, FaChartBar, FaList, FaRegClock } from "react-icons/fa";
+import { FaSearch, FaCode, FaPalette, FaBullhorn, FaChartBar, FaList, FaRegClock, FaBookOpen } from "react-icons/fa";
 import Sidebar from "@/components/Sidebar.jsx";
 import MyCoursesSkeleton from "@/components/MyCoursesSkeleton.jsx";
 import { getMyCourses } from "@/lib/apiService";
@@ -444,10 +444,21 @@ export default function MyCoursesPage() {
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-16">
-                      <p className="text-gray-500 text-lg">
-                        Tidak ada kursus yang cocok dengan pencarian Anda.
+                    <div className="flex flex-col items-center justify-center py-16 text-gray-600 bg-white rounded-2xl shadow-lg border border-gray-200/80">
+                      <FaBookOpen className="text-6xl text-gray-400 mb-6" />
+                      <h3 className="text-2xl font-bold mb-2">Tidak ada kursus yang ditemukan.</h3>
+                      <p className="mb-6 text-center max-w-sm">
+                        Sepertinya Anda belum memiliki kursus, atau tidak ada kursus yang cocok dengan pencarian Anda.
                       </p>
+                      <Link href="/courses" passHref>
+                        <motion.button
+                          className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition-colors"
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          Jelajahi Kursus
+                        </motion.button>
+                      </Link>
                     </div>
                   )}
                 </AnimatedContent>

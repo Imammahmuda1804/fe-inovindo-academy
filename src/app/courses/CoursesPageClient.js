@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { useSearchParams, useRouter } from "next/navigation";
 import {
   FaSearch,
   FaCode,
@@ -12,14 +11,15 @@ import {
   FaBullhorn,
   FaChartBar,
   FaList,
-  FaTag, // Added FaTag
+  FaTag,
 } from "react-icons/fa";
-// Removed unused API imports for client component
-// import { getCourses, getCategories, searchCourses } from "@/lib/apiService";
-import ensureAbsoluteUrl from "@/lib/urlHelpers";
+import { ensureAbsoluteUrl } from "@/lib/urlHelpers";
 import "./courses.css";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useLoading } from "@/context/LoadingContext"; // Import useLoading
 
 const CourseCard = ({ course }) => {
+  const { setIsPageLoading } = useLoading();
   // const router = useRouter(); // No longer needed for direct push
   const instructor = course.mentors?.[0]?.user;
   const instructorImage = instructor?.photo
@@ -33,11 +33,11 @@ const CourseCard = ({ course }) => {
   // };
 
   const formatCurrency = (amount) => {
-    if (typeof amount !== 'number' || amount < 0) return '';
-    if (amount === 0) return 'Gratis';
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
+    if (typeof amount !== "number" || amount < 0) return "";
+    if (amount === 0) return "Gratis";
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
       minimumFractionDigits: 0,
     }).format(amount);
   };
@@ -52,7 +52,11 @@ const CourseCard = ({ course }) => {
         boxShadow: "0px 15px 25px rgba(0, 0, 0, 0.07)",
       }}
     >
-      <Link href={`/detail-course/${course.slug}`} passHref>
+      <Link
+        href={`/detail-course/${course.slug}`}
+        passHref
+        onClick={() => setIsPageLoading(true)}
+      >
         <div className="cursor-pointer flex flex-col flex-grow">
           <div className="relative overflow-hidden w-full aspect-[16/9]">
             <Image
@@ -75,7 +79,7 @@ const CourseCard = ({ course }) => {
               {course.name}
             </h2>
             {/* Spacer to push instructor and button/price to bottom */}
-            <div className="flex-grow"></div> 
+            <div className="flex-grow"></div>
 
             {instructor && (
               <div className="flex items-center mt-3">
@@ -102,7 +106,10 @@ const CourseCard = ({ course }) => {
             <Link
               href={`/materi/${course.slug}`}
               passHref
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsPageLoading(true);
+              }}
             >
               <button className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg shadow-md hover:bg-blue-700">
                 Mulai Belajar
@@ -169,6 +176,7 @@ const Sidebar = ({
   setSortOrder,
   filterPrice,
   setFilterPrice,
+  setIsFiltering, // Receive setIsFiltering
 }) => (
   <aside className="w-full lg:w-1/4 xl:w-1/5">
     <div className="p-6 bg-white rounded-2xl shadow-md space-y-6">
@@ -183,7 +191,8 @@ const Sidebar = ({
               checked={sortOrder === "terbaru"}
               onChange={(e) => {
                 const { value } = e.target;
-                setSortOrder(prev => prev === value ? null : value);
+                setIsFiltering(true); // Start filtering
+                setSortOrder((prev) => (prev === value ? null : value));
               }}
               className="appearance-none h-4 w-4 border border-gray-400 rounded-none bg-white checked:bg-[radial-gradient(circle,_theme(colors.blue.600)_40%,_transparent_45%)] focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -196,7 +205,8 @@ const Sidebar = ({
               checked={sortOrder === "terlama"}
               onChange={(e) => {
                 const { value } = e.target;
-                setSortOrder(prev => prev === value ? null : value);
+                setIsFiltering(true); // Start filtering
+                setSortOrder((prev) => (prev === value ? null : value));
               }}
               className="appearance-none h-4 w-4 border border-gray-400 rounded-none bg-white checked:bg-[radial-gradient(circle,_theme(colors.blue.600)_40%,_transparent_45%)] focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -209,7 +219,8 @@ const Sidebar = ({
               checked={sortOrder === "harga-termahal"}
               onChange={(e) => {
                 const { value } = e.target;
-                setSortOrder(prev => prev === value ? null : value);
+                setIsFiltering(true); // Start filtering
+                setSortOrder((prev) => (prev === value ? null : value));
               }}
               className="appearance-none h-4 w-4 border border-gray-400 rounded-none bg-white checked:bg-[radial-gradient(circle,_theme(colors.blue.600)_40%,_transparent_45%)] focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -222,7 +233,8 @@ const Sidebar = ({
               checked={sortOrder === "harga-termurah"}
               onChange={(e) => {
                 const { value } = e.target;
-                setSortOrder(prev => prev === value ? null : value);
+                setIsFiltering(true); // Start filtering
+                setSortOrder((prev) => (prev === value ? null : value));
               }}
               className="appearance-none h-4 w-4 border border-gray-400 rounded-none bg-white checked:bg-[radial-gradient(circle,_theme(colors.blue.600)_40%,_transparent_45%)] focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -240,8 +252,9 @@ const Sidebar = ({
               type="radio"
               name="price"
               value="all"
-              checked={filterPrice === 'all'}
+              checked={filterPrice === "all"}
               onChange={(e) => {
+                setIsFiltering(true); // Start filtering
                 setFilterPrice(e.target.value);
                 setCurrentPage(1);
               }}
@@ -254,8 +267,9 @@ const Sidebar = ({
               type="radio"
               name="price"
               value="paid"
-              checked={filterPrice === 'paid'}
+              checked={filterPrice === "paid"}
               onChange={(e) => {
+                setIsFiltering(true); // Start filtering
                 setFilterPrice(e.target.value);
                 setCurrentPage(1);
               }}
@@ -268,8 +282,9 @@ const Sidebar = ({
               type="radio"
               name="price"
               value="free"
-              checked={filterPrice === 'free'}
+              checked={filterPrice === "free"}
               onChange={(e) => {
+                setIsFiltering(true); // Start filtering
                 setFilterPrice(e.target.value);
                 setCurrentPage(1);
               }}
@@ -296,6 +311,7 @@ const Sidebar = ({
                 checked={filterYear.includes(year.value)}
                 onChange={(e) => {
                   const { value, checked } = e.target;
+                  setIsFiltering(true); // Start filtering
                   const numValue = parseInt(value, 10);
                   const newValues = checked
                     ? [...filterYear, numValue]
@@ -325,20 +341,20 @@ const Sidebar = ({
               icon={cat.icon}
               imageUrl={cat.imageUrl}
               setCurrentPage={setCurrentPage}
+              setIsFiltering={setIsFiltering} // Pass setIsFiltering
             />
           ))}
         </div>
       </div>
-      
     </div>
   </aside>
 );
 const ICON_MAP = {
-  "FaCode": FaCode,
-  "FaPalette": FaPalette,
-  "FaBullhorn": FaBullhorn,
-  "FaChartBar": FaChartBar,
-  "FaList": FaList,
+  FaCode: FaCode,
+  FaPalette: FaPalette,
+  FaBullhorn: FaBullhorn,
+  FaChartBar: FaChartBar,
+  FaList: FaList,
 };
 
 const FilterButton = ({
@@ -349,9 +365,11 @@ const FilterButton = ({
   icon: IconComponent,
   imageUrl,
   setCurrentPage,
+  setIsFiltering, // Receive setIsFiltering
 }) => (
   <button
     onClick={() => {
+      setIsFiltering(true); // Start filtering
       setFilter(value);
       setCurrentPage(1);
     }}
@@ -362,7 +380,13 @@ const FilterButton = ({
     }`}
   >
     {imageUrl ? (
-      <Image src={imageUrl} alt={label} width={24} height={24} className="w-6 h-6 object-cover rounded-full" />
+      <Image
+        src={imageUrl}
+        alt={label}
+        width={24}
+        height={24}
+        className="w-6 h-6 object-cover rounded-full"
+      />
     ) : (
       IconComponent && <IconComponent className="w-6 h-6 rounded-full" />
     )}
@@ -373,7 +397,10 @@ const FilterButton = ({
 import { getCourses } from "@/lib/apiService";
 import { useAuth } from "@/context/AuthContext";
 
-export default function CoursesPageClient({ initialCourses, initialCategories }) {
+export default function CoursesPageClient({
+  initialCourses,
+  initialCategories,
+}) {
   const searchParams = useSearchParams();
   const auth = useAuth();
 
@@ -382,7 +409,9 @@ export default function CoursesPageClient({ initialCourses, initialCategories })
   const [filteredCourses, setFilteredCourses] = useState([]);
   const [featuredCourses, setFeaturedCourses] = useState([]);
   const [allCategories, setAllCategories] = useState(initialCategories);
-  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
+  const [searchTerm, setSearchTerm] = useState(
+    searchParams.get("search") || ""
+  );
   const [filterCategory, setFilterCategory] = useState("All");
   const [filterYear, setFilterYear] = useState([]);
   const [sortOrder, setSortOrder] = useState(null);
@@ -390,15 +419,16 @@ export default function CoursesPageClient({ initialCourses, initialCategories })
   const [currentPage, setCurrentPage] = useState(1);
   const [activeIndex, setActiveIndex] = useState(0);
   const coursesPerPage = 8;
+  const [isFiltering, setIsFiltering] = useState(false);
 
   // Effect for fetching and setting initial data based on auth state
   useEffect(() => {
     function formatCurrency(amount) {
-      if (typeof amount !== 'number' || amount < 0) return '';
-      if (amount === 0) return 'Gratis';
-      return new Intl.NumberFormat('id-ID', {
-        style: 'currency',
-        currency: 'IDR',
+      if (typeof amount !== "number" || amount < 0) return "";
+      if (amount === 0) return "Gratis";
+      return new Intl.NumberFormat("id-ID", {
+        style: "currency",
+        currency: "IDR",
         minimumFractionDigits: 0,
       }).format(amount);
     }
@@ -412,11 +442,13 @@ export default function CoursesPageClient({ initialCourses, initialCategories })
           // Fetch personalized data if logged in
           coursesData = await getCourses({});
         }
-        
-        setAllCourses(coursesData);
 
+        setAllCourses(coursesData);
       } catch (error) {
-        console.error("Failed to fetch courses, falling back to initial data.", error);
+        console.error(
+          "Failed to fetch courses, falling back to initial data.",
+          error
+        );
         setAllCourses(initialCourses); // Fallback on error
       } finally {
         setIsLoading(false); // Signal that loading is complete
@@ -428,6 +460,7 @@ export default function CoursesPageClient({ initialCourses, initialCategories })
 
   // Effect for filtering and sorting, runs only when data or filters change
   useEffect(() => {
+    setIsFiltering(true); // Start filtering loading state
     let filtered = allCourses;
 
     if (searchTerm) {
@@ -448,10 +481,10 @@ export default function CoursesPageClient({ initialCourses, initialCategories })
       );
     }
 
-    if (filterPrice === 'paid') {
-      filtered = filtered.filter(course => course.price > 0);
-    } else if (filterPrice === 'free') {
-      filtered = filtered.filter(course => course.price === 0);
+    if (filterPrice === "paid") {
+      filtered = filtered.filter((course) => course.price > 0);
+    } else if (filterPrice === "free") {
+      filtered = filtered.filter((course) => course.price === 0);
     }
 
     const sorted = [...filtered];
@@ -459,17 +492,24 @@ export default function CoursesPageClient({ initialCourses, initialCategories })
       sorted.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     } else if (sortOrder === "terlama") {
       sorted.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-    } else if (sortOrder === 'harga-termahal') {
+    } else if (sortOrder === "harga-termahal") {
       sorted.sort((a, b) => b.price - a.price);
-    } else if (sortOrder === 'harga-termurah') {
+    } else if (sortOrder === "harga-termurah") {
       sorted.sort((a, b) => a.price - b.price);
     }
 
     setFilteredCourses(sorted);
     setFeaturedCourses(sorted.slice(0, 3));
     setCurrentPage(1);
-  }, [searchTerm, filterCategory, filterYear, allCourses, sortOrder, filterPrice]);
-
+    setIsFiltering(false); // End filtering loading state
+  }, [
+    searchTerm,
+    filterCategory,
+    filterYear,
+    allCourses,
+    sortOrder,
+    filterPrice,
+  ]);
 
   const activeCourse = featuredCourses[activeIndex];
   const inactiveCourses = featuredCourses.filter((_, i) => i !== activeIndex);
@@ -477,11 +517,12 @@ export default function CoursesPageClient({ initialCourses, initialCategories })
   const categories = [
     { value: "All", label: "Semua", icon: ICON_MAP["FaList"] },
     ...allCategories.map((cat) => {
-      const isImagePath = cat.icon && (cat.icon.includes('.') || cat.icon.includes('/'));
+      const isImagePath =
+        cat.icon && (cat.icon.includes(".") || cat.icon.includes("/"));
       return {
         value: cat.name,
         label: cat.name,
-        icon: isImagePath ? undefined : (ICON_MAP[cat.icon] || FaCode),
+        icon: isImagePath ? undefined : ICON_MAP[cat.icon] || FaCode,
         imageUrl: isImagePath ? ensureAbsoluteUrl(cat.icon) : undefined,
       };
     }),
@@ -511,35 +552,38 @@ export default function CoursesPageClient({ initialCourses, initialCategories })
 
   if (isLoading) {
     return (
-       <main className="bg-gray-50 pt-28 pb-16 px-4 sm:px-6 lg:px-8">
-         <div className="text-center mb-12">
-            <div className="h-12 bg-gray-200 rounded-lg w-1/2 mx-auto animate-pulse"></div>
-            <div className="h-6 bg-gray-200 rounded-lg w-3/4 mx-auto mt-4 animate-pulse"></div>
-         </div>
-         <div className="flex flex-col lg:flex-row gap-8 xl:gap-12">
-            <div className="w-full lg:w-1/4 xl:w-1/5">
-                <div className="p-6 bg-white rounded-2xl shadow-md space-y-6 animate-pulse">
-                    <div className="h-8 bg-gray-200 rounded-lg w-3/4"></div>
-                    <div className="space-y-3">
-                        <div className="h-6 bg-gray-200 rounded-lg"></div>
-                        <div className="h-6 bg-gray-200 rounded-lg"></div>
-                    </div>
+      <main className="bg-gray-50 pt-28 pb-16 px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-12">
+          <div className="h-12 bg-gray-200 rounded-lg w-1/2 mx-auto animate-pulse"></div>
+          <div className="h-6 bg-gray-200 rounded-lg w-3/4 mx-auto mt-4 animate-pulse"></div>
+        </div>
+        <div className="flex flex-col lg:flex-row gap-8 xl:gap-12">
+          <div className="w-full lg:w-1/4 xl:w-1/5">
+            <div className="p-6 bg-white rounded-2xl shadow-md space-y-6 animate-pulse">
+              <div className="h-8 bg-gray-200 rounded-lg w-3/4"></div>
+              <div className="space-y-3">
+                <div className="h-6 bg-gray-200 rounded-lg"></div>
+                <div className="h-6 bg-gray-200 rounded-lg"></div>
+              </div>
+            </div>
+          </div>
+          <div className="w-full lg:flex-1">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {[...Array(6)].map((_, i) => (
+                <div
+                  key={i}
+                  className="bg-white rounded-2xl shadow-lg p-5 animate-pulse"
+                >
+                  <div className="h-44 bg-gray-200 rounded-lg mb-4"></div>
+                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
                 </div>
+              ))}
             </div>
-            <div className="w-full lg:flex-1">
-                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {[...Array(6)].map((_, i) => (
-                      <div key={i} className="bg-white rounded-2xl shadow-lg p-5 animate-pulse">
-                        <div className="h-44 bg-gray-200 rounded-lg mb-4"></div>
-                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                      </div>
-                    ))}
-                  </div>
-            </div>
-         </div>
-       </main>
-     );
+          </div>
+        </div>
+      </main>
+    );
   }
 
   return (
@@ -600,6 +644,7 @@ export default function CoursesPageClient({ initialCourses, initialCategories })
                         )}
                         <Link
                           href={`/detail-course/${activeCourse.slug}`}
+                          onClick={() => setIsPageLoading(true)}
                           className="px-5 py-2.5 font-semibold text-white bg-blue-600 rounded-lg shadow-md hover:bg-blue-700 transition-colors"
                         >
                           View Course
@@ -670,6 +715,7 @@ export default function CoursesPageClient({ initialCourses, initialCategories })
             setSortOrder={setSortOrder}
             filterPrice={filterPrice}
             setFilterPrice={setFilterPrice}
+            setIsFiltering={setIsFiltering} // Pass setIsFiltering
           />
 
           <div className="w-full lg:flex-1">
@@ -681,6 +727,7 @@ export default function CoursesPageClient({ initialCourses, initialCategories })
                   value={searchTerm}
                   className="w-full pl-10 pr-4 py-3 text-base border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow bg-white"
                   onChange={(e) => {
+                    setIsFiltering(true); // Start filtering
                     setSearchTerm(e.target.value);
                     setCurrentPage(1);
                   }}
@@ -705,25 +752,51 @@ export default function CoursesPageClient({ initialCourses, initialCategories })
                 ))}
               </div>
             ) : currentCourses.length > 0 ? (
-              <motion.div
-                className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5 }}
-              >
-                {currentCourses.map((course, index) => (
-                  <motion.div
-                    key={course.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: index * 0.05 }}
-                  >
-                    <CourseCard
-                      course={course}
-                    />
-                  </motion.div>
-                ))}
-              </motion.div>
+              <div className="relative">
+                {" "}
+                {/* Added relative positioning for the overlay */}
+                {isFiltering && (
+                  <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10 rounded-2xl">
+                    <svg
+                      className="animate-spin h-8 w-8 text-blue-600"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                  </div>
+                )}
+                <motion.div
+                  className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  {currentCourses.map((course, index) => (
+                    <motion.div
+                      key={course.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: index * 0.05 }}
+                    >
+                      <CourseCard course={course} />
+                    </motion.div>
+                  ))}
+                </motion.div>
+              </div>
             ) : (
               <div className="text-center py-16">
                 <p className="text-gray-500 text-lg">
@@ -746,4 +819,3 @@ export default function CoursesPageClient({ initialCourses, initialCategories })
     </main>
   );
 }
-

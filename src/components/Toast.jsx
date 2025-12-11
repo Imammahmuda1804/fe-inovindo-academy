@@ -20,7 +20,7 @@ const Toast = ({ toast, setToast }) => {
     ? <FaCheckCircle className="text-green-500" /> 
     : <FaExclamationCircle className="text-red-500" />;
 
-  const baseClasses = "fixed bottom-5 right-5 z-50 flex items-center px-4 py-3 rounded-lg shadow-2xl text-white max-w-sm";
+  const baseClasses = "fixed bottom-5 right-5 z-[9999] flex items-center px-4 py-3 rounded-lg shadow-2xl text-white max-w-sm";
   const typeClasses = type === 'success' ? "bg-gray-800" : "bg-red-800";
 
   return (

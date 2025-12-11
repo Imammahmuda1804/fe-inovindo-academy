@@ -2,6 +2,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { AppBody } from "./AppBody";
 import { ModalProvider } from "@/context/ModalContext";
+import { LoadingProvider } from "@/context/LoadingContext"; // Import LoadingProvider
 
 import { AuthProvider } from "@/context/AuthContext";
 
@@ -21,7 +22,9 @@ export default function RootLayout({ children }) {
       <body className={inter.className}>
         <AuthProvider>
           <ModalProvider>
-            <AppBody>{children}</AppBody>
+            <LoadingProvider>
+              <AppBody>{children}</AppBody>
+            </LoadingProvider>
           </ModalProvider>
         </AuthProvider>
         <script

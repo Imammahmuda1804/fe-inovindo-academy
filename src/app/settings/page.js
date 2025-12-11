@@ -46,6 +46,7 @@ export default function SettingsPage() {
   const [errors, setErrors] = useState({});
   const [activeTab, setActiveTab] = useState('Profil');
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -117,6 +118,7 @@ export default function SettingsPage() {
     if (section === 'Profil' && !isProfileChanged) return;
     if (section === 'Keamanan' && !isPasswordFormValid) return;
     
+    setIsSubmitting(true);
     try {
       if (section === 'Profil') {
         const profileData = {
@@ -155,6 +157,8 @@ export default function SettingsPage() {
         }
       }
       showToast(errorMessage, 'error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -221,8 +225,8 @@ export default function SettingsPage() {
                                   {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
                                 </div>
                                 <div className="text-right pt-2">
-                                  <button type="submit" disabled={!isProfileChanged} className="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed">
-                                    <FaSave className="mr-2" /> Simpan Perubahan
+                                  <button type="submit" disabled={!isProfileChanged || isSubmitting} className="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed">
+                                    <FaSave className="mr-2" /> {isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan'}
                                   </button>
                                 </div>
                               </form>
@@ -248,8 +252,8 @@ export default function SettingsPage() {
                                 {errors.confirm && <p className="text-red-500 text-xs mt-1">{errors.confirm}</p>}
                               </div>
                               <div className="text-right pt-2">
-                                <button type="submit" disabled={!isPasswordFormValid} className="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed">
-                                  <FaSave className="mr-2" /> Ganti Password
+                                <button type="submit" disabled={!isPasswordFormValid || isSubmitting} className="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed">
+                                  <FaSave className="mr-2" /> {isSubmitting ? 'Menyimpan...' : 'Ganti Password'}
                                 </button>
                               </div>
                             </form>

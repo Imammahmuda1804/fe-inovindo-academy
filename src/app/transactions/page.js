@@ -11,6 +11,7 @@ import { useAuth } from "@/context/AuthContext";
 import { ensureAbsoluteUrl } from "@/lib/urlHelpers";
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from "@/components/ProtectedRoute";
+import Toast from "@/components/Toast"; // Import Toast
 
 export default function TransactionsPage() {
   const { isLoggedIn, isAuthLoading } = useAuth();
@@ -18,6 +19,13 @@ export default function TransactionsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const router = useRouter();
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' }); // Toast state
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false); // New loading state for payment
+
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+  };
+
 
   // Load Midtrans Snap script
   useEffect(() => {
@@ -46,29 +54,40 @@ export default function TransactionsPage() {
 
   const handleContinuePayment = (snapToken) => {
     if (!snapToken) {
-      alert("Token pembayaran tidak ditemukan. Tidak dapat melanjutkan pembayaran.");
+      showToast("Token pembayaran tidak ditemukan. Tidak dapat melanjutkan pembayaran.", "error");
       console.error("snapToken is missing or undefined.");
       return;
     }
+
+    setIsProcessingPayment(true); // Start loading
 
     if (window.snap) {
       window.snap.pay(snapToken, {
         onSuccess: function (result) {
           console.log('Payment successful', result);
+          showToast("Pembayaran berhasil!", "success");
           router.refresh(); // Refresh data on page
+          setIsProcessingPayment(false); // End loading
         },
         onPending: function (result) {
           console.log('Payment pending', result);
+          showToast("Pembayaran Anda sedang diproses.", "info");
+          setIsProcessingPayment(false); // End loading
         },
         onError: function (result) {
           console.error('Payment error', result);
+          showToast("Pembayaran gagal. Silakan coba lagi.", "error");
+          setIsProcessingPayment(false); // End loading
         },
         onClose: function () {
-          alert('Anda menutup jendela pembayaran sebelum menyelesaikan transaksi.');
+          showToast('Anda menutup jendela pembayaran sebelum menyelesaikan transaksi.', 'warning');
+          setIsProcessingPayment(false); // End loading
         }
       });
     } else {
       console.error('Snap.js is not loaded yet');
+      showToast("Gagal memuat layanan pembayaran. Coba muat ulang halaman.", "error");
+      setIsProcessingPayment(false); // End loading
     }
   };
 
@@ -81,6 +100,7 @@ export default function TransactionsPage() {
           setTransactions(data);
         } catch (error) {
           console.error("Error fetching transactions:", error);
+          showToast("Gagal memuat riwayat transaksi.", "error");
         } finally {
           setIsLoading(false);
         }
@@ -127,6 +147,7 @@ export default function TransactionsPage() {
 
   return (
     <ProtectedRoute>
+      <Toast toast={toast} setToast={setToast} />
       {isAuthLoading || isLoading ? (
         <TransactionsSkeleton />
       ) : (
@@ -256,9 +277,22 @@ export default function TransactionsPage() {
                                     {!trx.is_paid && !isExpired && (
                                       <button
                                         onClick={() => handleContinuePayment(trx.snap_token)}
-                                        className="w-full sm:w-auto inline-flex items-center px-2 py-1 border border-transparent text-[0.65rem] leading-4 font-medium rounded-md text-white bg-yellow-500 hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-colors duration-200"
+                                        disabled={isProcessingPayment}
+                                        className="w-full sm:w-auto inline-flex items-center px-2 py-1 border border-transparent text-[0.65rem] leading-4 font-medium rounded-md text-white bg-yellow-500 hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                                       >
-                                        <FaCreditCard className="mr-0.5" /> Lanjutkan Bayar
+                                        {isProcessingPayment ? (
+                                          <>
+                                            <svg className="animate-spin h-3 w-3 mr-1 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            Memproses...
+                                          </>
+                                        ) : (
+                                          <>
+                                            <FaCreditCard className="mr-0.5" /> Lanjutkan Bayar
+                                          </>
+                                        )}
                                       </button>
                                     )}
                                     {trx.proof && (

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import Link from "next/link";
 import AnimatedContent from "@/components/animatedcontent.jsx";
 import Sidebar from "@/components/Sidebar.jsx";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -247,15 +248,21 @@ export default function CertificatesPage() {
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-16 bg-white rounded-2xl shadow-lg">
-                      <FaCertificate className="mx-auto text-5xl text-gray-300 mb-4" />
-                      <h3 className="text-xl font-semibold text-gray-700">
-                        Belum Ada Sertifikat
-                      </h3>
-                      <p className="text-gray-500 mt-2">
-                        Selesaikan kursus untuk mendapatkan sertifikat pertama
-                        Anda.
+                    <div className="flex flex-col items-center justify-center py-16 text-gray-600 bg-white rounded-2xl shadow-lg border border-gray-200/80">
+                      <FaCertificate className="text-6xl text-gray-400 mb-6" />
+                      <h3 className="text-2xl font-bold mb-2 text-center">Belum Ada Sertifikat yang Ditemukan</h3>
+                      <p className="mb-6 text-center max-w-sm">
+                        Sepertinya Anda belum memiliki sertifikat, atau tidak ada sertifikat yang cocok dengan pencarian Anda.
                       </p>
+                      <Link href="/courses" passHref>
+                        <motion.button
+                          className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition-colors"
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          Jelajahi Kursus untuk Mendapatkan Sertifikat
+                        </motion.button>
+                      </Link>
                     </div>
                   )}
                 </AnimatedContent>

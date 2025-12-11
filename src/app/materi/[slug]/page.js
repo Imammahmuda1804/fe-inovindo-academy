@@ -9,6 +9,7 @@ import SplitText from "@/components/splittext.jsx";
 import CountUp from "@/components/countup.jsx";
 import MateriSkeleton from "@/components/MateriSkeleton.jsx";
 import ConfirmModal from "@/components/ConfirmModal.jsx";
+import Toast from "@/components/Toast.jsx"; // Import Toast
 import {
   getMateriBySlug,
   createQuizAttempt,
@@ -48,12 +49,17 @@ export default function MateriPage() {
   const [history, setHistory] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalContent, setModalContent] = useState(null);
-  const [isFinishing, setIsFinishing] = useState(false);
+  const [isFinishing, setIsFinishing] = useState(false); // This is already present for proceedToCreateCertificate
+  const [isCompleting, setIsCompleting] = useState(false); // New state for 'Tandai Selesai'
   const [isLockedByStartDate, setIsLockedByStartDate] = useState(false);
   const [batchStartDate, setBatchStartDate] = useState(null);
   const [errorModal, setErrorModal] = useState({ isOpen: false, title: '', message: ''});
-  const [infoModal, setInfoModal] = useState({ isOpen: false, title: '', children: '', variant: 'info' });
   const [certificateConfirmModal, setCertificateConfirmModal] = useState({ isOpen: false });
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' }); // Toast state
+
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+  };
 
 
   const mainContentRef = useRef(null);
@@ -214,12 +220,7 @@ export default function MateriPage() {
 
   const handleContentClick = (content, isLocked) => {
     if (isLocked) {
-      setInfoModal({ 
-        isOpen: true, 
-        title: 'Materi Terkunci', 
-        children: 'Selesaikan materi sebelumnya terlebih dahulu untuk membuka materi ini.', 
-        variant: 'danger' 
-      });
+      showToast('Selesaikan materi sebelumnya terlebih dahulu untuk membuka materi ini.', 'warning');
       return;
     }
     setCurrentContent(content);
@@ -276,19 +277,20 @@ setCurrentContentId(content.id);
       if (response.status === "success") {
         await fetchCourseData();
       } else {
-        alert(
-          "Gagal menyimpan hasil kuis: " + (response.message || "Unknown error")
+        showToast(
+          "Gagal menyimpan hasil kuis: " + (response.message || "Unknown error"),
+          "error"
         );
       }
     } catch (error) {
-      alert("Terjadi kesalahan saat menyimpan hasil kuis.");
+      showToast("Terjadi kesalahan saat menyimpan hasil kuis.", "error");
     }
   };
 
   const toggleContentCompletion = async () => {
     if (!courseData || !currentContent || currentContent.is_completed) {
       console.error("Missing courseData, currentContent, or content already completed.");
-      alert("Terjadi kesalahan: Data tidak lengkap atau materi sudah diselesaikan.");
+      showToast("Terjadi kesalahan: Data tidak lengkap atau materi sudah diselesaikan.", "error");
       return;
     }
 
@@ -296,25 +298,17 @@ setCurrentContentId(content.id);
     const hasPassedQuiz = history.some(attempt => attempt.passed);
 
     if (hasQuiz && !hasPassedQuiz) {
-        setInfoModal({ 
-          isOpen: true, 
-          title: 'Kuis Belum Lulus', 
-          children: 'Anda harus lulus kuis terlebih dahulu untuk menyelesaikan materi ini.', 
-          variant: 'danger' 
-        });
+        showToast('Anda harus lulus kuis terlebih dahulu untuk menyelesaikan materi ini.', 'warning');
         return;
     }
+
+    setIsCompleting(true); // Start loading
 
     try {
         const res = await markContentAsComplete(courseData.id, currentContent.id, courseData.active_batch_id);
 
         if (res.data?.message === "Content marked as complete") {
-            setInfoModal({ 
-              isOpen: true, 
-              title: 'Berhasil', 
-              children: 'Materi berhasil ditandai selesai!', 
-              variant: 'success' 
-            });
+            showToast('Materi berhasil ditandai selesai!', 'success');
             
             const newCourseData = JSON.parse(JSON.stringify(courseData));
             for (const section of newCourseData.sections) {
@@ -327,11 +321,13 @@ setCurrentContentId(content.id);
             setCourseData(newCourseData);
             setCurrentContent({ ...currentContent, is_completed: true });
         } else {
-            alert("Gagal menandai selesai: " + (res.data?.message || "Error"));
+            showToast("Gagal menandai selesai: " + (res.data?.message || "Error"), "error");
         }
     } catch (error) {
         console.error("Error marking content as complete:", error);
-        alert("Terjadi kesalahan saat menandai materi selesai.");
+        showToast("Terjadi kesalahan saat menandai materi selesai.", "error");
+    } finally {
+      setIsCompleting(false); // End loading
     }
   };
 
@@ -339,7 +335,7 @@ setCurrentContentId(content.id);
     setCertificateConfirmModal({ isOpen: false }); // Close the modal first
     if (!courseData || !currentContent || !enrollmentData || isFinishing) {
       console.error("Missing critical data for finishing course (enrollmentData).");
-      alert("Terjadi kesalahan: Data penting (seperti data pendaftaran) tidak ditemukan untuk menyelesaikan kursus.");
+      showToast("Terjadi kesalahan: Data penting (seperti data pendaftaran) tidak ditemukan untuk menyelesaikan kursus.", "error");
       return;
     }
 
@@ -372,15 +368,8 @@ setCurrentContentId(content.id);
       };
 
       await createCertificate(certificatePayload);
-      setInfoModal({
-        isOpen: true,
-        title: 'Selamat!',
-        children: 'Anda telah menyelesaikan kursus ini. Sertifikat Anda sedang dibuat dan akan tersedia di halaman sertifikat.',
-        variant: 'success',
-        onConfirm: () => router.push('/certificates'),
-        confirmText: 'Lihat Sertifikat',
-        hideCancelButton: true,
-      });
+      showToast('Selamat! Sertifikat Anda sedang dibuat dan akan segera tersedia.', 'success');
+      router.push('/certificates');
 
       // Optimistically update UI
       const newCourseData = JSON.parse(JSON.stringify(courseData));
@@ -398,13 +387,23 @@ setCurrentContentId(content.id);
       const errorMessage = error.response?.data?.errors 
         ? Object.values(error.response.data.errors).flat().join("\n") 
         : error.message || "Terjadi kesalahan. Silakan hubungi admin.";
-      alert(error.response?.data?.errors ? `Gagal membuat sertifikat karena data tidak valid:\n${errorMessage}` : errorMessage);
+      showToast(error.response?.data?.errors ? `Gagal membuat sertifikat karena data tidak valid:\n${errorMessage}` : errorMessage, "error");
     } finally {
       setIsFinishing(false);
     }
   };
 
   const handleFinishCourse = () => {
+    const hasQuiz = !!currentContent.quiz;
+    const hasPassedQuiz = history.some(attempt => attempt.passed);
+
+    if (hasQuiz && !hasPassedQuiz) {
+        showToast('Anda harus lulus kuis pada materi terakhir ini untuk menyelesaikan kursus.', 'warning');
+        return;
+    }
+
+    setIsFinishing(true); // Start loading
+
     setCertificateConfirmModal({
       isOpen: true,
       title: "Konfirmasi Pembuatan Sertifikat",
@@ -412,7 +411,10 @@ setCurrentContentId(content.id);
       confirmText: "Lanjutkan",
       cancelText: "Ganti Nama",
       onConfirm: proceedToCreateCertificate,
-      onClose: () => router.push('/settings'),
+      onClose: () => {
+        setCertificateConfirmModal({ ...certificateConfirmModal, isOpen: false });
+        setIsFinishing(false); // End loading if modal is closed
+      },
       variant: 'warning'
     });
   };
@@ -528,16 +530,7 @@ setCurrentContentId(content.id);
   
   return (
     <ProtectedRoute>
-      <ConfirmModal
-        isOpen={infoModal.isOpen}
-        title={infoModal.title}
-        onConfirm={infoModal.onConfirm || (() => setInfoModal({ isOpen: false, title: '', children: '' }))}
-        confirmText={infoModal.confirmText || "Tutup"}
-        hideCancelButton={infoModal.hideCancelButton !== undefined ? infoModal.hideCancelButton : true}
-        variant={infoModal.variant}
-      >
-        {infoModal.children}
-      </ConfirmModal>
+      <Toast toast={toast} setToast={setToast} />
 
       <ConfirmModal
         isOpen={certificateConfirmModal.isOpen}
@@ -991,18 +984,26 @@ setCurrentContentId(content.id);
                               isContentCompleted
                                 ? "bg-gradient-to-r from-gray-500 to-gray-600 cursor-not-allowed"
                                 : "bg-gradient-to-r from-purple-500 to-indigo-600"
-                            }`}
-                            whileHover={!isContentCompleted ? {
+                            } ${isFinishing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            whileHover={!isContentCompleted && !isFinishing ? {
                               scale: 1.05,
                               y: -2,
                               boxShadow: "0px 10px 20px rgba(139, 92, 246, 0.3)",
                             } : {}}
-                            whileTap={!isContentCompleted ? { scale: 0.95 } : {}}
+                            whileTap={!isContentCompleted && !isFinishing ? { scale: 0.95 } : {}}
                           >
                             <FiAward className="w-5 h-5" />
                             <span>
                               {isFinishing
-                                ? "Memproses..."
+                                ? (
+                                  <span className="flex items-center">
+                                    <svg className="animate-spin h-4 w-4 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Memproses...
+                                  </span>
+                                )
                                 : isContentCompleted
                                 ? "Kursus Selesai"
                                 : "Selesaikan Kursus & Dapatkan Sertifikat"}
@@ -1011,21 +1012,29 @@ setCurrentContentId(content.id);
                         ) : (
                           <motion.button
                             onClick={toggleContentCompletion}
-                            disabled={isContentCompleted}
+                            disabled={isContentCompleted || isCompleting}
                             className={`flex items-center px-6 py-3 space-x-2 font-semibold text-white rounded-lg shadow-lg ${
                               isContentCompleted
                                 ? "bg-gradient-to-r from-gray-500 to-gray-600 cursor-not-allowed"
                                 : "bg-gradient-to-r from-green-400 to-blue-500"
-                            }`}
-                            whileHover={!isContentCompleted ? {
+                            } ${isCompleting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            whileHover={!isContentCompleted && !isCompleting ? {
                               scale: 1.05,
                               y: -2,
                               boxShadow: "0px 10px 20px rgba(16, 185, 129, 0.3)",
                             }: {}}
-                            whileTap={!isContentCompleted ? { scale: 0.95 } : {}}
+                            whileTap={!isContentCompleted && !isCompleting ? { scale: 0.95 } : {}}
                           >
                             {isContentCompleted ? (
                               <FiCheckCircle className="w-5 h-5" />
+                            ) : isCompleting ? (
+                              <span className="flex items-center">
+                                <svg className="animate-spin h-4 w-4 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Memproses...
+                              </span>
                             ) : (
                               <FiCircle className="w-5 h-5" />
                             )}

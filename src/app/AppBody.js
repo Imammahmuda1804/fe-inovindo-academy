@@ -1,28 +1,42 @@
 'use client';
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import Footer from "../components/footer";
 import Header from "../components/header";
 import { useModal } from "@/context/ModalContext";
 import ConfirmModal from "@/components/ConfirmModal";
+import FullScreenLoader from "@/components/FullScreenLoader"; // Import FullScreenLoader
+import { useLoading } from "@/context/LoadingContext"; // Import useLoading
 
 export function AppBody({ children }) {
   const pathname = usePathname();
   const { modalState, closeModal } = useModal();
+  const { isPageLoading, setIsPageLoading } = useLoading(); // Use loading context
 
   useEffect(() => {
+    // On any route change, the pathname will update, and this effect will run.
+    // We set loading to false, assuming the page has finished loading.
+    if (isPageLoading) {
+      setIsPageLoading(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+
+  useEffect(() => {
+    // Also, handle the modal overflow logic
     if (modalState.isOpen) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
     }
+    
     return () => {
       document.body.style.overflow = 'unset';
     };
   }, [modalState.isOpen]);
 
   const standalonePages = ["/payment-success", "/landing-page", "/login"];
-  const isStandalone = standalonePages.includes(pathname);
+  const isStandalone = standalonePages.some(page => pathname.startsWith(page));
   const noFooterPages = pathname.startsWith("/materi");
 
   const handleConfirm = async () => {
@@ -30,22 +44,14 @@ export function AppBody({ children }) {
       await modalState.onConfirm();
     }
   };
-
-  if (isStandalone) {
-    return (
-      <>
-        <main>{children}</main>
-        <ConfirmModal {...modalState} onClose={closeModal} onConfirm={handleConfirm} />
-      </>
-    );
-  }
-
+  
   return (
     <>
-      <Header />
+      {isPageLoading && <FullScreenLoader />}
+      {!isStandalone && <Header />}
       <main>{children}</main>
-      {!noFooterPages && <Footer />}
-      <ConfirmModal {...modalState} onClose={closeModal} onConfirm={handleConfirm} />
+      {!isStandalone && !noFooterPages && <Footer />}
+      {modalState.isOpen && <ConfirmModal {...modalState} onClose={closeModal} onConfirm={handleConfirm} />}
     </>
   );
 }

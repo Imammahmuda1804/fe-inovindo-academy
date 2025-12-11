@@ -55,7 +55,7 @@ function CourseCard({ course, index }) {
         </div>
       </div>
       <div className="flex flex-col flex-grow p-5">
-        <h3 className="text-lg font-bold text-gray-900">
+        <h3 className="text-lg font-bold text-gray-900 line-clamp-2 min-h-[3.25rem] flex-grow"> {/* Added line-clamp-2, min-h-[3.25rem] and flex-grow */}
           <Link href={course.link} className="hover:underline">
             {course.title}
           </Link>
