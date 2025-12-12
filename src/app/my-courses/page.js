@@ -117,7 +117,7 @@ const CourseCard = ({ course }) => {
           </Link>
 
           <Link href={isExpired || isNotStarted ? `/detail-course/${course.slug}` : `/materi/${course.slug}`} passHref>
-            <h2 className="text-lg font-bold text-gray-800 cursor-pointer">{course.name}</h2>
+            <h2 className="text-lg font-bold text-gray-800 cursor-pointer line-clamp-2 overflow-hidden text-ellipsis min-h-[3rem]">{course.name}</h2>
           </Link>
 
           <div className="flex items-center mt-3">
