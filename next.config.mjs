@@ -29,6 +29,10 @@ const nextConfig = {
       },
     ];
   },
+  webpack: (config, { isServer }) => {
+    config.optimization.minimize = false;
+    return config;
+  },
 };
 
 // Use ESM export for .mjs

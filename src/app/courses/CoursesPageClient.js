@@ -194,7 +194,7 @@ const Sidebar = ({
                 setIsFiltering(true); // Start filtering
                 setSortOrder((prev) => (prev === value ? null : value));
               }}
-              className="appearance-none h-4 w-4 border border-gray-400 rounded-none bg-white checked:bg-[radial-gradient(circle,_theme(colors.blue.600)_40%,_transparent_45%)] focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="appearance-none h-4 w-4 border border-gray-400 rounded-none bg-white checked:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <span>Terbaru</span>
           </label>
@@ -208,7 +208,7 @@ const Sidebar = ({
                 setIsFiltering(true); // Start filtering
                 setSortOrder((prev) => (prev === value ? null : value));
               }}
-              className="appearance-none h-4 w-4 border border-gray-400 rounded-none bg-white checked:bg-[radial-gradient(circle,_theme(colors.blue.600)_40%,_transparent_45%)] focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="appearance-none h-4 w-4 border border-gray-400 rounded-none bg-white checked:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <span>Terlama</span>
           </label>
@@ -222,7 +222,7 @@ const Sidebar = ({
                 setIsFiltering(true); // Start filtering
                 setSortOrder((prev) => (prev === value ? null : value));
               }}
-              className="appearance-none h-4 w-4 border border-gray-400 rounded-none bg-white checked:bg-[radial-gradient(circle,_theme(colors.blue.600)_40%,_transparent_45%)] focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="appearance-none h-4 w-4 border border-gray-400 rounded-none bg-white checked:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <span>Harga Termahal</span>
           </label>
@@ -236,7 +236,7 @@ const Sidebar = ({
                 setIsFiltering(true); // Start filtering
                 setSortOrder((prev) => (prev === value ? null : value));
               }}
-              className="appearance-none h-4 w-4 border border-gray-400 rounded-none bg-white checked:bg-[radial-gradient(circle,_theme(colors.blue.600)_40%,_transparent_45%)] focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="appearance-none h-4 w-4 border border-gray-400 rounded-none bg-white checked:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <span>Harga Termurah</span>
           </label>
@@ -319,7 +319,7 @@ const Sidebar = ({
                   setFilterYear(newValues);
                   setCurrentPage(1);
                 }}
-                className="appearance-none h-4 w-4 border border-gray-400 rounded-none bg-white checked:bg-[radial-gradient(circle,_theme(colors.blue.600)_40%,_transparent_45%)] focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="appearance-none h-4 w-4 border border-gray-400 rounded-none bg-white checked:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <span>{year.label}</span>
             </label>

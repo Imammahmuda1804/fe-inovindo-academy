@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useModal } from "@/context/ModalContext";
 import Loader from "@/components/Loader";
 
-export default function AuthCallbackPage() {
+function AuthCallback() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { refetchUser } = useAuth();
@@ -63,9 +63,17 @@ export default function AuthCallbackPage() {
   }, [searchParams, router, refetchUser, openModal]);
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+    <div className="flex items-center justify-center min-h-screen bg-ray-100">
       <Loader />
       <p className="ml-4 text-gray-700">Memproses login Anda...</p>
     </div>
+  );
+}
+
+export default function AuthCallbackPage() {
+  return (
+    <Suspense fallback={<Loader />}>
+      <AuthCallback />
+    </Suspense>
   );
 }

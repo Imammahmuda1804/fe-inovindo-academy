@@ -55,7 +55,9 @@ function CourseCard({ course, index }) {
         </div>
       </div>
       <div className="flex flex-col flex-grow p-5">
-        <h3 className="text-lg font-bold text-gray-900 line-clamp-2 min-h-[3.25rem] flex-grow"> {/* Added line-clamp-2, min-h-[3.25rem] and flex-grow */}
+        <h3 className="text-lg font-bold text-gray-900 line-clamp-2 min-h-[3.25rem] flex-grow">
+          {" "}
+          {/* Added line-clamp-2, min-h-[3.25rem] and flex-grow */}
           <Link href={course.link} className="hover:underline">
             {course.title}
           </Link>
@@ -328,7 +330,7 @@ export default function HomePageClient({
 
             <div>
               <div>
-                <motion.div className="relative flex items-center justify-center px-2 md:px-0 [mask-image:_linear-gradient(to_bottom,black_85%,transparent)]">
+                <motion.div className="relative flex items-center justify-center px-2 md:px-0 mask-bottom-fade">
                   {" "}
                   <Image
                     src="/assets/images/pesawat.png"
@@ -570,10 +572,7 @@ export default function HomePageClient({
                   <div className="swiper-wrapper">
                     {apiPopularCourses &&
                       apiPopularCourses.map((course, index) => (
-                        <div
-                          className="h-auto pb-10 swiper-slide"
-                          key={index}
-                        >
+                        <div className="h-auto pb-10 swiper-slide" key={index}>
                           <CourseCard course={course} index={index} />
                         </div>
                       ))}
@@ -634,4 +633,3 @@ export default function HomePageClient({
     </>
   );
 }
-

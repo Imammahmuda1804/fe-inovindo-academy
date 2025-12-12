@@ -1,4 +1,5 @@
 import { Inter } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { AppBody } from "./AppBody";
 import { ModalProvider } from "@/context/ModalContext";
@@ -27,10 +28,10 @@ export default function RootLayout({ children }) {
             </LoadingProvider>
           </ModalProvider>
         </AuthProvider>
-        <script
+        <Script
           src="https://app.sandbox.midtrans.com/snap/snap.js"
           data-client-key="SB-Mid-client-EKpKloyAMpZCbeJe"
-        ></script>
+        ></Script>
       </body>
     </html>
   );

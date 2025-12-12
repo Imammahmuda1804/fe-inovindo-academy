@@ -47,7 +47,7 @@ export default async function HomePage() {
   // 4. Kirim data yang sudah jadi ke komponen klien sebagai props
   return (
     <HomePageClient
-      initialStats={statsData || {}}
+      initialStats={statsData || { courses: 0, students: 0, mentors: 0, benefits: 0 }}
       initialPopularCourses={transformedCourses}
       initialCategories={transformedCategories}
     />

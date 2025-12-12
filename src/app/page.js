@@ -59,7 +59,9 @@ export default function NewLandingPage() {
   useEffect(() => {
     const fetchStats = async () => {
       const data = await getStats();
-      setStats(data);
+      if (data) {
+        setStats(data);
+      }
     };
     fetchStats();
   }, []);
@@ -115,7 +117,7 @@ export default function NewLandingPage() {
 
               <div>
                 <motion.div
-                  className="relative flex items-center justify-center px-2 md:px-0 [mask-image:_linear-gradient(to_bottom,black_85%,transparent)]"
+                  className="relative flex items-center justify-center px-2 md:px-0 mask-bottom-fade"
                   variants={scrollAnimateVariants}
                 >
                   <Image
@@ -416,8 +418,8 @@ export default function NewLandingPage() {
               <p className="text-gray-500">About Us</p>
             </motion.div>
           </div>
-          <div className="[mask-image:_linear-gradient(to_bottom,black_75%,transparent)] mt-5">
-            <div className="w-full inline-flex flex-nowrap [mask-image:_linear-gradient(to_right,transparent_0,_black_128px,_black_calc(100%-200px),transparent_100%)]">
+          <div className="mask-bottom-fade mt-5">
+            <div className="w-full inline-flex flex-nowrap mask-right-fade">
               {[...Array(2)].map((_, i) => (
                 <motion.ul
                   key={i}
