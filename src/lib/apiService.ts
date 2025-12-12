@@ -47,9 +47,13 @@ export const setupInterceptors = (onAuthFailure) => {
         throw new Error("Failed to refresh token, no access token received.");
       }
     } catch (error) {
+
       console.error("Error inside refreshToken function. Triggering auth failure.", error);
       onAuthFailure(); // Call the explicit logout function
-      throw error;
+      // This returns a promise that never resolves, effectively halting the chain
+      // of the original request. This prevents the UI from trying to handle an error
+      // while the redirect is in progress.
+      return new Promise(() => {});
     }
   };
 
@@ -58,7 +62,7 @@ export const setupInterceptors = (onAuthFailure) => {
     async (error) => {
       const originalRequest = error.config;
 
-      if (error.response && error.response.status === 401 && !originalRequest._retry) {
+      if (error.response && error.response.status === 401 && originalRequest.url !== '/refresh' && !originalRequest._retry) {
         if (isRefreshing) {
           return new Promise(function(resolve, reject) {
             failedQueue.push({ resolve, reject });

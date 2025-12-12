@@ -20,11 +20,11 @@ const FullScreenLoader = () => {
         transition={{ duration: 0.5 }}
       >
         <Image
-          src="/assets/images/pesawat.png"
+          src="/assets/images/loading_course.png"
           alt="Loading Illustration"
-          width={200}
-          height={200}
-          className="w-48 h-auto mb-8"
+          width={1500}
+          height={1500}
+          className="w-230 h-auto mb-8"
         />
       </motion.div>
       <motion.div
@@ -49,7 +49,9 @@ const FullScreenLoader = () => {
           animate={{ y: ["-10px", "10px"] }}
         />
       </motion.div>
-      <p className="mt-6 text-lg font-semibold text-gray-700">Mempersiapkan Halaman...</p>
+      <p className="mt-6 text-lg font-semibold text-gray-700">
+        Mempersiapkan Halaman...
+      </p>
     </div>
   );
 };
